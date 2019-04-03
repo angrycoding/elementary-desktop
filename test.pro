@@ -5,7 +5,6 @@
 #-------------------------------------------------
 
 QT       += qml quick core gui webview webenginewidgets
-LIBS += -lobjc
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 

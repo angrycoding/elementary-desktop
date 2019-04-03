@@ -4,7 +4,6 @@
 #include<QEvent>
 #include <QDebug>
 #include<QCoreApplication>
-#include <objc/objc-runtime.h>
 
 #include <QtCore/QUrl>
 #include <QtCore/QCommandLineOption>
@@ -24,7 +23,7 @@
 #include <QMenu>
 #include "custompage.h"
 
-QString DESKTOP_DIR = "/Users/ruslanmatveev/";
+QString DESKTOP_DIR = "/home/ruslan/Qt";
 
 void MainWindow::myfunction() {
 
@@ -171,6 +170,8 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent) {
     connect(watcher, SIGNAL(directoryChanged(const QString &)), this, SLOT(showModified(const QString &)));
     connect(watcher, SIGNAL(fileChanged(const QString &)), this, SLOT(showModified(const QString &)));
 
+    this->setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowStaysOnBottomHint);
+    this->setAttribute(Qt::WA_TranslucentBackground);
 
 
 }
