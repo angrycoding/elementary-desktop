@@ -58,6 +58,48 @@ documentRef.on('mousedown', function(event) {
 
 });
 
+
+function makeIcon(fileName, target) {
+
+	var firstLine = fileName.slice(0, 16);
+	var secondLine = fileName.slice(16);
+
+
+
+	var item = $(`
+		<div style="width: 120px; display: flex; flex-direction: column; align-items: center; ">
+			<img src="https://upload.wikimedia.org/wikipedia/commons/5/57/Black_Sega_Mega_Drive_icon.png" style="width: 60%; margin-bottom: 0px;" />
+
+			<div class="line firstLine">
+				<div class="firstLineContent"></div>
+				<div class="thirdLineContent"></div>
+			</div>
+			<div style="position: relative;">
+				<div  class="line secondLineContent"></div>
+				<div class="borderSegment left"></div>
+				<div class="borderSegment right"></div>
+			</div>
+		</div>
+	`).appendTo(target)
+
+
+	$('.firstLineContent', item).html(firstLine);
+
+	if (secondLine.length > 16) {
+		$('.thirdLineContent', item).html(secondLine.slice(0, 8) + '...' + secondLine.slice(-5));
+	}
+	
+	else if (secondLine.length > 12) {
+		$('.thirdLineContent', item).html(secondLine);
+	}
+
+	else {
+		$('.secondLineContent', item).html(secondLine);
+	}
+	
+
+}
+
 ipcRenderer.on('renderDesktop', function(event, files) {
 
 	var wrapper = $('.wrapper');
@@ -66,25 +108,25 @@ ipcRenderer.on('renderDesktop', function(event, files) {
 
 	for (var c = 0; c < files.length; c++) {
 		
-
+		makeIcon(files[c].name, wrapper)
 		
-		var el = $('<div/>')
+		// var el = $('<div/>')
 
-		.addClass('icon')
+		// .addClass('icon')
 
-		.data('path', files[c].path)
+		// .data('path', files[c].path)
 
-		.attr('draggable', true)
+		// .attr('draggable', true)
 
-		.css({
-		})
+		// .css({
+		// })
 
-		.html(`
-			<img src="${files[c].icon}" />
-			<div>${files[c].name}</div>
-		`)
+		// .html(`
+		// 	<img src="${files[c].icon}" />
+		// 	<div>${files[c].name}</div>
+		// `)
 
-		.appendTo(wrapper);
+		// .appendTo(wrapper);
 	}
 
 

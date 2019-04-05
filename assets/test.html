@@ -1,0 +1,245 @@
+<script type="text/javascript" src='jquery.js'></script>
+<style type="text/css">
+
+	html {
+		--main-bg-color: #3067D2;
+		--border-size: 3px;
+		--padding-top-bottom: 4px;
+		--padding-left-right: 5px;
+	}
+
+	* {
+		font-family: Lucida Grande;
+		color: white;
+		font-size: 13px;
+	}
+
+
+	.borderSegment.left {
+		left: calc(var(--border-size) * -1);
+	}
+
+	.borderSegment.right {
+		right: calc(var(--border-size) * -1);
+	}
+
+
+
+
+	.line {
+		white-space: nowrap;
+		text-align: center;
+		position: relative;
+		padding-top: var(--padding-top-bottom);
+		padding-bottom: var(--padding-top-bottom);
+		padding-left: var(--padding-left-right);
+		padding-right: var(--padding-left-right);
+		background-color: var(--main-bg-color);
+		border-bottom-left-radius: var(--border-size);
+		border-bottom-right-radius: var(--border-size); 
+	}
+
+	.firstLine {
+		border-top-left-radius: var(--border-size);
+		border-top-right-radius: var(--border-size); 
+	}
+
+	.secondLineContent {
+		padding-top: 0px;
+		margin-top: calc(var(--padding-top-bottom) * -1);
+	}
+
+	.secondLineContent:empty ~ * {
+		display: none;
+	}
+
+
+	.borderSegment {
+		top: 0px;
+		overflow: hidden;
+		position: absolute;
+		width: var(--border-size);
+		height: var(--border-size);
+	}
+
+	.borderSegment:before {
+		content: '\00a0';
+		display: block;
+		position: relative;
+		border-radius: var(--border-size);
+		width: calc(var(--border-size) * 2);
+		height: calc(var(--border-size) * 2);
+		box-shadow: 0px 0px 0px 2000px var(--main-bg-color);
+	}
+
+	.borderSegment.left:before {
+		left: calc(var(--border-size) * -1);
+	}
+
+
+
+</style>
+
+<div style="position: absolute;  left: 100px; top: 100px; ">
+
+	<div style="width: 120px; display: flex; flex-direction: column; align-items: center; ">
+		<img src="https://upload.wikimedia.org/wikipedia/commons/5/57/Black_Sega_Mega_Drive_icon.png" style="width: 60%; margin-bottom: 0px;" />
+
+		<div class="line firstLine">
+			<div class="firstLineContent"></div>
+			<div class="thirdLineContent"></div>
+		</div>
+		<div style="position: relative;">
+			<div  class="line secondLineContent"></div>
+			<div class="borderSegment left"></div>
+			<div class="borderSegment right"></div>
+		</div>
+	</div>
+
+
+</div>
+
+<span class="line" id="mes" style="display: none;">xxx</span>
+
+<script>
+	
+	var mes = $('#mes');
+
+	var c = document.createElement('canvas');
+	var ctx = c.getContext("2d");
+	ctx.font = '13px Lucida Grande';
+
+	function splitText(text, maxWidth) {
+		var firstLine = '';
+		text = text.split('');
+		while (text.length) {
+			var size = ctx.measureText(firstLine + text[0]).width;
+			if (size > maxWidth) break;
+			firstLine += text.shift();
+		}
+		return [firstLine, text.join('')];
+	}
+
+	function fitText(text, maxWidth) {
+		
+		var result = splitText(text, maxWidth);
+		var firstLine = result[0];
+		var secondLine = result[1];
+		if (!secondLine.length) return [firstLine, ''];
+		if (ctx.measureText(secondLine).width <= maxWidth / 100 * 90)
+			return [firstLine, secondLine];
+		if (ctx.measureText(secondLine).width <= maxWidth)
+			return [firstLine, '', secondLine];
+
+
+		// var aw = ctx.measureText(secondLine).width;
+		// var bw = ctx.measureText('...').width;
+
+
+		console.info(secondLine);
+		console.info(secondLine.slice(-7));
+		// console.info(ctx.measureText(secondLine).width)
+		// console.info()
+		// }
+
+		// else {
+		// 	console.info(2)
+		// }
+
+			// if (ctx.measureText(text).width > maxWidth) {
+
+			// 	console.info('split')
+				
+			// 	// var half = Math.round(text.length / 2);
+			// 	// text = text.slice(0, half);
+			// 	// text += '...';
+			// 	// text += text.slice()
+
+			// 	// firstLine.push('', text);
+
+			// } else if (ctx.measureText(text).width > 90) {
+			// 	firstLine.push('', text);
+			// } else {
+			// 	firstLine.push(text);
+			// }
+		// }
+
+
+		// return [firstLine, secondLine];
+	}
+	
+
+
+
+	var fileName = 'AAA2dswwwkkkkkkksaaa...MafT..jps2';
+	fileName = fitText(fileName, 120);
+
+	// var firstLine = fileName.slice(0, 16);
+	// var secondLine = fileName.slice(16);
+
+
+
+	$('.firstLineContent').html(fileName[0]);
+	$('.secondLineContent').html(fileName[1]);
+	$('.thirdLineContent').html(fileName[2]);
+
+	// if (secondLine.length > 16) {
+	// 	$('.thirdLineContent').html(secondLine.slice(0, 8) + '...' + secondLine.slice(-5));
+	// }
+	
+	// else if (secondLine.length > 12) {
+	// 	$('.thirdLineContent').html(secondLine);
+	// }
+
+	// else {
+	// }
+
+	/*
+	return;
+	var l = '', breakWidth = 134;
+	for (var c = 0; c < fileName.length; c++) {
+		if (measureText(l += fileName[c]) > breakWidth) {
+			
+			var firstLine = fileName.slice(0, c - 1);
+			var secondLine = fileName.slice(c - 1);
+
+			if (measureText(secondLine) > measureText(firstLine)) {
+				secondLine = secondLine.slice(0, 8) + '...' + secondLine.slice(-6);
+				fileName = [
+					firstLine,
+					'',
+					secondLine
+				];
+			}
+
+			else if ((measureText(secondLine) / measureText(firstLine)) * 100 > 80) {
+				fileName = [
+					firstLine,
+					'',
+					secondLine
+				];
+			} 
+
+			else fileName = [
+					firstLine,
+					secondLine
+				];
+			
+			break;
+		}
+	}
+
+
+
+
+	if (typeof fileName === 'string')
+		fileName = [fileName, ''];
+
+
+	$('.firstLineContent').html(fileName[0]);
+	$('.secondLine').html(fileName[1]);
+	$('.thirdLineContent').html(fileName[2]);
+	*/
+</script>
+
+
