@@ -16,6 +16,8 @@ var documentRef = $(document);
 
 documentRef.on('mousedown', function(event) {
 
+	if (event.which !== 1) return;
+
 	var canvas = $('#canvas');
 	var sx = event.pageX, sy = event.pageY;
 
@@ -45,14 +47,14 @@ documentRef.on('mousedown', function(event) {
 	// 	ctx.stroke();
 	// });
 
-		documentRef.one('mouseup.something', function() {
-			canvas.hide();
-			documentRef.off('.something');
-
-		});
-
+		return false;
 	});
 
+	documentRef.one('mouseup.something', function() {
+		canvas.hide();
+		documentRef.off('.something');
+
+	});
 
 });
 
