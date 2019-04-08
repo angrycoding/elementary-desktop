@@ -1,7 +1,11 @@
-var FS = require('fs'),
+var OS = require('os'),
+    FS = require('fs'),
 	Path = require('path'),
 	Async = require('async'),
+	Shell = require('shelljs'),
 	Electron = require('electron'),
+	Mime = require('mime'),
+	myEmitter = new (require('events'))(),
 	isOSX = (process.platform === 'darwin'),
 	{
 		app,
@@ -13,12 +17,16 @@ var FS = require('fs'),
 if (!app.requestSingleInstanceLock()) return app.quit();
 
 
-// var DESKTOP_DIR = '/home/ruslan/Qt';
+
+
+
+
+var DESKTOP_DIR = '/home/ruslan/Qt';
 var DESKTOP_DIR = app.getPath('home');
 var THEME_DIR = process.argv[2] || '';
 var FOLDER_ICON = Path.resolve(THEME_DIR, 'places/64/folder.svg');
 
-
+var GSettings = {};
 
 
 function getPathIcon(path, ret) {
@@ -30,6 +38,7 @@ function getPathIcon(path, ret) {
 }
 
 function readDesktop(ret) {
+
 	var resultFiles = [];
 	FS.readdir(DESKTOP_DIR, function(error, files) {
 		Async.each(files, function(fileName, next) {
@@ -43,6 +52,7 @@ function readDesktop(ret) {
 					icon: icon,
 					path: filePath,
 					name: fileName,
+					mime: Mime.getType(filePath),
 					isDirectory: isDirectory
 				});
 				next();
@@ -51,63 +61,106 @@ function readDesktop(ret) {
 
 
 		}, function() {
+			// console.info(resultFiles)
 			ret(null, resultFiles);
 		});
 	});
 }
 
 function createWindow(ret) {
-	//setTimeout(createWindow, 300)
 	app.on('ready', function() {
 
-		var { width, height } = Electron.screen.getPrimaryDisplay().bounds
-		var foo = Electron.screen.getPrimaryDisplay().workArea.y;
+	setTimeout(function() {
+			var { width, height } = Electron.screen.getPrimaryDisplay().bounds
+			var foo = Electron.screen.getPrimaryDisplay().workArea.y;
 
-		var mainWindow = new BrowserWindow(Object.assign({
-			x: 0,
-			y: 30,
-			
-			title: 'xxx-yyy-zzz-foo-bar',
-			type: 'desktop',
-			show: false,
-			frame: false,
-			transparent : true,
-			skipTaskbar: true,
+			var mainWindow = new BrowserWindow(Object.assign({
+				x: 0,
+				y: 30,
+				
+				title: 'xxx-yyy-zzz-foo-bar',
+				type: 'desktop',
+				show: false,
+				frame: false,
+				transparent : true,
+				skipTaskbar: true,
 
-			webPreferences: {
-				webgl: false,
-				webaudio: false,
-				plugins: false,
-				defaultFontSize: 13,
-				defaultFontFamily: {
-					standard: 'Apple Garamond Regular'
-				},
-				additionalArguments: ' --enable-transparent-visuals --disable-gpu'
-			}
-		}, isOSX && {
-			type: 'normal',
-			frame: true,
-			transparent: false,
-			skipTaskbar: false
-		}));
+				webPreferences: {
+					webgl: false,
+					webaudio: false,
+					plugins: false,
+					defaultFontSize: 12,
+					defaultMonospaceFontSize: 12,
+					defaultFontFamily: {
+						monospace: 'Open Sans'
+					},
+					additionalArguments: ' --enable-transparent-visuals --disable-gpu'
+				}
+			}, isOSX && {
+				type: 'normal',
+				frame: true,
+				transparent: false,
+				skipTaskbar: false
+			}));
 
-		mainWindow.loadURL(`file://${__dirname}/assets/index.html?width=${width}&height=${height-30}`);
+			mainWindow.loadURL(`file://${__dirname}/assets/index.html?width=${width}&height=${height-30}`);
 
-		mainWindow.webContents.on('did-finish-load', function() {
-			ret(null, mainWindow);
-		});
+			mainWindow.webContents.on('did-finish-load', function() {
+				ret(null, mainWindow);
+			});
+	}, 500);
 
 	});
 }
 
 
+ipcMain.on('openItem', function(event, fullPath) {
+	shell.openItem(fullPath);
+});
+
 Async.parallel({
 	files: readDesktop,
 	mainWindow: createWindow
 }, function(error, result) {
+	
 	result.mainWindow.webContents.send('renderDesktop', result.files);
 });
 
-ipcMain.on('openItem', function(event, fullPath) {
-	shell.openItem(fullPath);
+
+/*
+myEmitter.once('gSettingsUpdated', function() {
+
+	Async.parallel({
+		files: readDesktop,
+		mainWindow: createWindow
+	}, function(error, result) {
+		
+		result.mainWindow.webContents.send('renderDesktop', result.files);
+	});
+
 });
+
+
+Shell.exec(
+	'gsettings list-recursively org.gnome.desktop.interface & gsettings monitor org.gnome.desktop.interface',
+	{async: true, silent: true}
+).stdout.on('data', function(lines) {
+	lines = lines.split(/\n+/g);
+	while (lines.length) {
+		var line = lines.shift();
+		line = line.split('org.gnome.desktop.interface');
+		line = line.pop().trim();
+		line = line.split(/\s/g);
+		var key = line.shift().replace(/\:/g, '').trim();
+		var value = line.join(' ').trim();
+		if (value[0] === "'" && value[value.length - 1] === "'")
+			value = value.slice(1, -1);
+		if (!key) continue;
+
+
+		GSettings[key] = value;
+	}
+	myEmitter.emit('gSettingsUpdated');
+});
+
+*/

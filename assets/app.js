@@ -5,15 +5,27 @@ var Electron = require('electron'),
 
 var win = remote.getCurrentWindow()
 var nodeConsole = require('console');
-console = myConsole = new nodeConsole.Console(process.stdout, process.stderr);
-
-// alert(document.body.style.width)
+console = new nodeConsole.Console(process.stdout, process.stderr);
 
 var documentRef = $(document);
 
 
 
+documentRef.on('mousedown', '.icon:not(.selected)', function(event) {
+	$('.icon.selected').removeClass('selected');
+	$(this).addClass('selected');
+});
 
+win.on('focus', function() {
+	$(document.documentElement).addClass('focused');
+});
+
+win.on('blur', function() {
+	$(document.documentElement).removeClass('focused');
+});
+
+
+/*
 documentRef.on('mousedown', function(event) {
 
 	if (event.which !== 1) return;
@@ -57,78 +69,97 @@ documentRef.on('mousedown', function(event) {
 	});
 
 });
+*/
 
 
-function makeIcon(fileName, target) {
+var c = document.createElement('canvas');
+var ctx = c.getContext("2d");
+ctx.font = (
+	window
+	.getComputedStyle(document.documentElement, null)
+	.fontSize + ' monospace'
+);
 
-	var firstLine = fileName.slice(0, 16);
-	var secondLine = fileName.slice(16);
+
+function splitText(text, maxWidth) {
+	var firstLine = '';
+	text = text.split('');
+	while (text.length) {
+		var size = ctx.measureText(firstLine + text[0]).width;
+		if (size > maxWidth) break;
+		firstLine += text.shift();
+	}
+	return [firstLine, text.join('')];
+}
+
+function fitText(text, maxWidth) {
+	
+	var result = splitText(text, maxWidth);
+	var firstLine = result[0];
+	var secondLine = result[1];
+	if (!secondLine.length) return [firstLine, ''];
+
+	var firstLineSize = ctx.measureText(firstLine).width;
+	var secondLineSize = ctx.measureText(secondLine).width;
+
+	
+	if (secondLineSize <= firstLineSize / 100 * 90)
+		return [firstLine, secondLine];
+
+	if (secondLineSize <= firstLineSize)
+		return [firstLine, '', secondLine];
+
+	var rest = '...' + secondLine.slice(-5);
+	var restSize = ctx.measureText(rest).width;
+
+	rest = splitText(secondLine, firstLineSize - restSize)[0] + rest;
+
+	return [firstLine, '', rest]
+}
 
 
+
+
+function makeIcon(fileName, icon, target, fullPath) {
+
+	fileName = fitText(fileName, 100);
 
 	var item = $(`
-		<div style="width: 120px; display: flex; flex-direction: column; align-items: center; ">
-			<img src="https://upload.wikimedia.org/wikipedia/commons/5/57/Black_Sega_Mega_Drive_icon.png" style="width: 60%; margin-bottom: 0px;" />
+
+		<div class="icon" draggable="true" data-path="${fullPath}">
+
+			<img src="${icon}" />
 
 			<div class="line firstLine">
-				<div class="firstLineContent"></div>
-				<div class="thirdLineContent"></div>
+				<div class="firstLineContent">${fileName[0]}</div>
+				<div class="thirdLineContent">${fileName[2] || ''}</div>
 			</div>
-			<div style="position: relative;">
-				<div  class="line secondLineContent"></div>
+			<div class="secondLineWrapper">
+				<div  class="line secondLineContent">${fileName[1] || ''}</div>
 				<div class="borderSegment left"></div>
 				<div class="borderSegment right"></div>
 			</div>
 		</div>
+
 	`).appendTo(target)
-
-
-	$('.firstLineContent', item).html(firstLine);
-
-	if (secondLine.length > 16) {
-		$('.thirdLineContent', item).html(secondLine.slice(0, 8) + '...' + secondLine.slice(-5));
-	}
-	
-	else if (secondLine.length > 12) {
-		$('.thirdLineContent', item).html(secondLine);
-	}
-
-	else {
-		$('.secondLineContent', item).html(secondLine);
-	}
 	
 
 }
+
+document.addEventListener('dragstart', function (evt) {
+	evt.stopPropagation();
+	// evt.preventDefault();
+  	return false;
+});
+
 
 ipcRenderer.on('renderDesktop', function(event, files) {
 
 	var wrapper = $('.wrapper');
 
-	//wrapper.html(JSON.stringify(files));
-
 	for (var c = 0; c < files.length; c++) {
-		
-		makeIcon(files[c].name, wrapper)
-		
-		// var el = $('<div/>')
-
-		// .addClass('icon')
-
-		// .data('path', files[c].path)
-
-		// .attr('draggable', true)
-
-		// .css({
-		// })
-
-		// .html(`
-		// 	<img src="${files[c].icon}" />
-		// 	<div>${files[c].name}</div>
-		// `)
-
-		// .appendTo(wrapper);
+		makeIcon(files[c].name, files[c].icon, wrapper, files[c].path)
 	}
-
 
 
 	if (!isOSX) {
@@ -139,6 +170,7 @@ ipcRenderer.on('renderDesktop', function(event, files) {
 
 	(isOSX ? win.show() : win.showInactive());
 	if (!isOSX) setTimeout(() => win.setResizable(false), 500);
+
 });
 
 
@@ -152,8 +184,7 @@ documentRef.on('dblclick', '.icon', function() {
 
 
 
-// documentRef.on('dragenter', function(event) {
-	
+
 // 	var target = $(event.target);
 	
 // 	if (!target.is('.icon')) {
@@ -172,27 +203,32 @@ documentRef.on('dblclick', '.icon', function() {
 
 var currentTarget;
 
+documentRef.on('_dragstart', '.icon', function(event) {
+	// event = event.originalEvent;
+	// event.dataTransfer.setDragImage($('img', this)[0], 0, 0);
+})
 
-documentRef.on('dragover', function(event) {
 
-	if (currentTarget) {
-		currentTarget.css('background-color', '');
-		console.info(1);
-	}
+documentRef.on('_dragover', function(event) {
+
+	// if (currentTarget) {
+	// 	// currentTarget.css('background-color', '');
+	// 	console.info(1);
+	// }
 	
 	event = event.originalEvent;
 	event.dataTransfer.dropEffect = 'none';
 	
 	var target = $(event.target);
 	
-	if (!target.is('.icon')) {
-		target = target.closest('.icon');
-	}
+	// if (!target.is('.icon')) {
+		// target = target.closest('.icon');
+	// }
 
 	if (target.length) {
 		currentTarget = target;
 		event.dataTransfer.dropEffect = 'copy';
-		target.css('background-color', 'red');
+		// target.css('background-color', 'red');
 	}
 
 
@@ -214,7 +250,7 @@ documentRef.on('dragover', function(event) {
 	// event.preventDefault();
 });
 
-documentRef.on('drop', '.icon', function(event) {
+documentRef.on('_drop', '.icon', function(event) {
 	event = event.originalEvent;
 	myConsole.info(
 		event.dataTransfer.files[0].path,
@@ -224,7 +260,7 @@ documentRef.on('drop', '.icon', function(event) {
 });
 
 
-documentRef.on('dragcancel', function() {
+documentRef.on('_dragcancel', function() {
 	myConsole.info('aa');
 	// if (currentTarget) {
 	// 	currentTarget.css('background-color', '');
@@ -233,7 +269,7 @@ documentRef.on('dragcancel', function() {
 })
 
 
-documentRef.on('dragend', function() {
+documentRef.on('_dragend', function() {
 	myConsole.info('x');
 	// if (currentTarget) {
 	// 	currentTarget.css('background-color', '');
