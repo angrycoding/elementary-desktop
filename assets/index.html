@@ -2,10 +2,52 @@
 <html>
 	<head>
 		<meta charset="UTF-8" />
-		<link rel="stylesheet" type="text/css" href="style.css" />
+		<style type="text/css">
+			html, body {
+				padding: 0px;
+				margin: 0px;
+				position: absolute;
+				top: 0px;
+				right: 0px;
+				left: 0px;
+				bottom: 0px;
+				width: 100%;
+				height: 100%;
+				overflow: hidden;
+				position: absolute;
+				background-color: transparent;
+			}
+			.quitButton {
+				position: absolute;
+				bottom: 30px;
+				right: 30px;
+				z-index: 11111;
+			}
+
+			.wrapper {
+				display: flex;
+				flex-wrap: wrap;
+				flex-direction: column;
+				position: absolute;
+				top: 0px;
+				left: 0px;
+				right: 0px;
+				bottom: 0px;
+				justify-content: flex-start;
+				align-items: flex-start;
+				align-content: flex-start;
+			}
+
+			.icon {
+				margin: 10px;
+			}
+
+		</style>
+		<link rel="stylesheet" type="text/css" href="desktopIcon.css" />
 		<script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
 		<script type="text/javascript" src="jquery.js"></script>
 		<script>if (window.module) module = window.module;</script>
+		<script type="text/javascript" src="desktopIcon.js"></script>
 		<script type="text/javascript" src="app.js"></script>
 	</head>
 	<body>

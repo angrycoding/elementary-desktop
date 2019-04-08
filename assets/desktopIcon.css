@@ -1,35 +1,23 @@
-body {
-	position: absolute;
-	left: 0px;
-	right: 0px;
-	bottom: 0px;
-	top: 0px;
-	display: flex;
-	flex-wrap: wrap;
-	flex-direction: column;
-	align-items: flex-start;
-	align-content: flex-start;
-}
-
-
 :root {
-	--border-size: 4px;
+	--border-size: 5px;
 	--icon-font-family: 'Lucida Grande';
-	--icon-font-size: 12px;
+	--icon-font-size: 13px;
 	--icon-size: 110px;
 	--padding-left-right: 5px;
 	--padding-top-bottom: 3px;
-	--icon-label-bg-color: transparent;
-	--icon-label-text-color: white;
-	--icon-image-size: 92%;
-	--icon-image-border-color: transparent;
+	--icon-image-size: 100%;
+	
 	--icon-image-bg-color: transparent;
+	--icon-image-border-color: transparent;
 	--icon-image-border-radius: 4px;
 	--icon-image-border-size: 2px;
+
+	--icon-label-bg-color: transparent;
+	--icon-label-text-color: white;
 }
 
 .icon {
-	margin: 16px;
+	pointer-events: none;
 	white-space: nowrap;
 	width: var(--icon-size);
 	height: var(--icon-size);
@@ -37,14 +25,16 @@ body {
 	font-size: var(--icon-font-size);
 	display: flex;
 	flex-direction: column;
-	/*background-color: gray;*/
 }
 
-
 .icon-selected {
-	/*--icon-label-bg-color: #3067D2;*/
-	--icon-label-bg-color: blue;
+	--icon-label-bg-color: #3067D2;
 	--icon-label-text-color: white;
+}
+
+.inactive .icon-selected {
+	--icon-label-bg-color: #CDCDCD;
+	--icon-label-text-color: #333333;
 }
 
 .icon-borderSegment {
@@ -106,13 +96,10 @@ body {
 	padding-top: calc(var(--padding-top-bottom) * 3);
 }
 
-
-
 .icon-lines {
 	position: absolute;
 	left: 0px;
 	right: 0px;
-	/*bottom: 0px;*/
 	top: 0px;
 	display: flex;
 	justify-content: flex-start;
@@ -175,4 +162,12 @@ body {
 
 .icon-secondLine:empty ~ * {
 	display: none;
+}
+
+.icon-image > img,
+.icon-firstLine,
+.icon-secondLine,
+.icon-thirdLine {
+	pointer-events: all;
+	cursor: pointer;
 }
