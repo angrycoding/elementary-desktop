@@ -1,0 +1,178 @@
+body {
+	position: absolute;
+	left: 0px;
+	right: 0px;
+	bottom: 0px;
+	top: 0px;
+	display: flex;
+	flex-wrap: wrap;
+	flex-direction: column;
+	align-items: flex-start;
+	align-content: flex-start;
+}
+
+
+:root {
+	--border-size: 4px;
+	--icon-font-family: 'Lucida Grande';
+	--icon-font-size: 12px;
+	--icon-size: 110px;
+	--padding-left-right: 5px;
+	--padding-top-bottom: 3px;
+	--icon-label-bg-color: transparent;
+	--icon-label-text-color: white;
+	--icon-image-size: 92%;
+	--icon-image-border-color: transparent;
+	--icon-image-bg-color: transparent;
+	--icon-image-border-radius: 4px;
+	--icon-image-border-size: 2px;
+}
+
+.icon {
+	margin: 16px;
+	white-space: nowrap;
+	width: var(--icon-size);
+	height: var(--icon-size);
+	font-family: var(--icon-font-family);
+	font-size: var(--icon-font-size);
+	display: flex;
+	flex-direction: column;
+	/*background-color: gray;*/
+}
+
+
+.icon-selected {
+	/*--icon-label-bg-color: #3067D2;*/
+	--icon-label-bg-color: blue;
+	--icon-label-text-color: white;
+}
+
+.icon-borderSegment {
+	top: 0px;
+	overflow: hidden;
+	position: absolute;
+	width: var(--border-size);
+	height: var(--border-size);
+}
+
+.icon-borderSegment:before {
+	content: '\00a0';
+	display: block;
+	position: relative;
+	border-radius: var(--border-size);
+	width: calc(var(--border-size) * 2);
+	height: calc(var(--border-size) * 2);
+	box-shadow: 0px 0px 0px 2000px var(--icon-label-bg-color);
+}
+
+.icon-borderSegmentLeft:before {
+	left: calc(var(--border-size) * -1);
+}
+
+.icon-borderSegmentLeft {
+	left: calc(var(--border-size) * -1);
+}
+
+.icon-borderSegmentRight {
+	right: calc(var(--border-size) * -1);
+}
+
+.icon-image {
+	flex: 1;
+	width: 100%;
+	text-align: center;
+}
+
+.icon-image > img {
+	height: 100%;
+	-webkit-user-drag: none;
+	box-sizing: border-box;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: var(--icon-image-size);
+	border-radius: var(--icon-image-border-radius);
+	border: var(--icon-image-border-size) solid var(--icon-image-border-color);
+	background-color: var(--icon-image-bg-color);
+}
+
+.icon-label {
+	position: relative;
+}
+
+.icon-label:before {
+	content: '\00a0\a\00a0';
+	display: block;
+	white-space: pre;
+	padding-top: calc(var(--padding-top-bottom) * 3);
+}
+
+
+
+.icon-lines {
+	position: absolute;
+	left: 0px;
+	right: 0px;
+	/*bottom: 0px;*/
+	top: 0px;
+	display: flex;
+	justify-content: flex-start;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+}
+
+.icon-rename {
+	margin-top: var(--padding-top-bottom);
+	overflow-y: auto;
+	overflow-x: hidden;
+	word-wrap: break-word;
+	overflow-wrap: break-word;
+	white-space: normal;
+	border-radius: var(--border-size);
+	min-width: 2px;
+	max-width: calc(var(--icon-size) - var(--padding-left-right) * 2);
+	padding-left: var(--padding-left-right);
+	padding-right: var(--padding-left-right);
+	outline: none;
+	background-color: white;
+	border-top: var(--padding-top-bottom) solid transparent;
+	border-bottom: var(--padding-top-bottom) solid transparent;
+}
+
+
+.icon-rename ~ * {
+	display: none;
+}
+
+.icon-line1 {
+	color: var(--icon-label-text-color);
+	margin-top: var(--padding-top-bottom);
+	border-top-left-radius: var(--border-size);
+	border-top-right-radius: var(--border-size);
+	border-bottom-left-radius: var(--border-size);
+	border-bottom-right-radius: var(--border-size);
+	padding-top: var(--padding-top-bottom);
+	padding-bottom: var(--padding-top-bottom);
+	padding-left: var(--padding-left-right);
+	padding-right: var(--padding-left-right);
+	background-color: var(--icon-label-bg-color);
+}
+
+.icon-line2 {
+	position: relative;
+}
+
+.icon-secondLine {
+	color: var(--icon-label-text-color);
+	margin-top: calc(var(--padding-top-bottom) * -1);
+	padding-bottom: var(--padding-top-bottom);
+	padding-left: var(--padding-left-right);
+	padding-right: var(--padding-left-right);
+	background-color: var(--icon-label-bg-color);
+	border-bottom-left-radius: var(--border-size);
+	border-bottom-right-radius: var(--border-size);
+}
+
+.icon-secondLine:empty ~ * {
+	display: none;
+}
