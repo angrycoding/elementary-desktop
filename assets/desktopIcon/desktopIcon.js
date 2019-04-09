@@ -1,5 +1,5 @@
 (function() {
-
+	
 	var ctx = document.createElement('canvas').getContext('2d');
 	var fontSize = parseInt(getCSSVar('--icon-font-size'), 10);
 	ctx.font = [getCSSVar('--icon-font-size'), getCSSVar('--icon-font-family')].join(' ');
@@ -48,7 +48,7 @@
 		var splittedText = fitText(text);
 
 		var el = $(`
-			<div class="icon" draggable="true" data-text="${text}">
+			<div class="icon" _draggable="true" data-text="${text}">
 				<div class="icon-image">
 					<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
 					style="background-image: url('${iconUrl}');" />
@@ -85,11 +85,63 @@
 		$(document.documentElement).addClass('inactive');
 	});
 
-	$(document).on('mousedown', '.icon:not(.icon-selected)', function() {
-		$('.icon-selected').removeClass('icon-selected');
-		$(this).addClass('icon-selected')
+	var iel;
+
+
+
+	function deselectAll() {
+		$('.icon-selected')
+		.removeClass('icon-selected')
+		.appendTo(document.body);
+	}
+
+	$(document).on('mousedown', function(event) {
+
+		var target = $(event.target);
+		var icon = target.closest('.icon');
+		var shiftKeyDown = event.shiftKey;
+
+		if (!icon.length) {
+			deselectAll();
+		}
+
+		else if (!icon.is('.icon-selected')) {
+
+			if (!iel) {
+				iel = $('<div />')
+				.addClass('dragmebitch')
+				.attr('draggable', true)
+				.css({
+					position: 'absolute',
+					top: 0,
+					left: 0,
+					right: 0,
+					bottom: 0,
+					zIndex: 4000,
+					// backgroundColor: 'gray'
+					// pointerEvents: 'none'
+				}).appendTo(document.body)
+			}
+
+			icon.appendTo(iel);
+
+			if (!shiftKeyDown) deselectAll();
+
+			icon.addClass('icon-selected')
+
+
+		}
+
+
+		else if (shiftKeyDown) {
+			icon.removeClass('icon-selected')
+			.appendTo(document.body);
+		}
+
 	});
 
-	window.addIcon = addIcon;
+
+
+	window.createDesktopIcon = addIcon;
 
 })();

@@ -1,29 +1,39 @@
 <!DOCTYPE html>
-<html style="background-image: url(bg.jpg); background-position: bottom right;">
+<html style="background-image: url(bg.jpg); background-position: top left; background-size: 100%;">
 	<head>
-		<script type="text/javascript" src='jquery.js'></script>
-		<link rel="stylesheet" type="text/css" href="desktopIcon.css" />
-		<script type="text/javascript" src="desktopIcon.js"></script>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+
+		<script type="text/javascript" src="lib/jQuery.js"></script>
+		<script type="text/javascript" src="lib/Socket.io.js"></script>
+
+		<link rel="stylesheet" type="text/css" href="desktopIcon/desktopIcon.css" />
+		<script type="text/javascript" src="desktopIcon/desktopIcon.js"></script>
+		<script type="text/javascript" src="testApp.js"></script>
 		<style type="text/css">
+			
+			html, body {
+				padding: 0px;
+				margin: 0px;
+			}
+			
 			body {
 				position: absolute;
 				left: 0px;
 				right: 0px;
 				bottom: 0px;
 				top: 0px;
-				display: flex;
+				/*display: flex;
 				flex-wrap: wrap;
 				flex-direction: column;
-				align-items: flex-start;
 				align-content: flex-start;
-			}
+*/			}
+
+
 		</style>
 	</head>
 	<body>
-		<!--textarea style="resize: none" rows="3"></textarea-->
-
-	<script>
+		<!--script>
 
 		function selectElementContents(el) {
 		    var range = document.createRange();
@@ -109,23 +119,8 @@
 		
 
 
-		function generate_random_string(string_length){
-		    let random_string = '';
-		    let random_ascii;
-		    for(let i = 0; i < string_length; i++) {
-		        random_ascii = Math.floor((Math.random() * 25) + 97);
-		        random_string += String.fromCharCode(random_ascii)
-		    }
-		    return random_string
-		}
 
+	</script-->
 
-		for (var c = 0; c < 30; c++) { 
-			addIcon(generate_random_string(Math.floor(Math.random() * 60) + 4) + '.jpg');
-		}
-
-
-	</script>
-
-</body>
+	</body>
 </html>

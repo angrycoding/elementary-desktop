@@ -17,11 +17,58 @@ var OS = require('os'),
 if (!app.requestSingleInstanceLock()) return app.quit();
 
 
+function getFiles(ret) {
+	FS.readdir(DESKTOP_DIR, function(error, files) {
+		files = files.filter(file => file[0] !== '.');
+
+		var response = [];
+		Async.each(files, function(fileName, next) {
+			var filePath = Path.resolve(DESKTOP_DIR, fileName);
+			response.push({name: fileName, path: filePath});
+			next();
+		}, function() {
+			ret(response);
+		});
+
+	});
+}
+
+var server = require('http').createServer();
+var io = require('socket.io')(server);
+io.on('connection', function(socket) {
+
+	socket.on('renderDesktop', function(ret) {
+		getFiles(ret);
+	});
+
+	// getFiles(function(files) {
+	// 	socket.emit('renderDesktop', files);
+	// });
 
 
 
+	
 
-var DESKTOP_DIR = '/home/ruslan/Qt';
+});
+
+server.listen(9999);
+
+
+
+ipcMain.on('ondragstart', function(event, filePath) {
+	console.info(arguments);
+
+
+	// mainWindow.capturePage([rect, ]callback)
+
+  // event.sender.startDrag({
+  //   file: filePath,
+  //   icon: '/Users/ruslanmatveev/Desktop/68747470733a2f2f637332322e6261627973666572612e72752f622f392f362f622f37343433323039302e3137333639353631312e6a706567.jpg'
+  // })
+});
+
+
+// var DESKTOP_DIR = '/home/ruslan/Qt';
 var DESKTOP_DIR = app.getPath('home');
 var THEME_DIR = process.argv[2] || '';
 var FOLDER_ICON = Path.resolve(THEME_DIR, 'places/64/folder.svg');
@@ -114,6 +161,8 @@ function createWindow(ret) {
 }
 
 
+
+/*
 ipcMain.on('openItem', function(event, fullPath) {
 	shell.openItem(fullPath);
 });
@@ -125,7 +174,24 @@ Async.parallel({
 	
 	result.mainWindow.webContents.send('renderDesktop', result.files);
 });
+*/
 
+
+app.on('ready', function() {
+
+	var mainWindow = new BrowserWindow({
+		x: 0,
+		y: 30,
+		show: true,
+	});
+
+	mainWindow.loadURL(`file://${__dirname}/assets/test.html`);
+
+});
+
+// mainWindow.webContents.on('did-finish-load', function() {
+	// ret(null, mainWindow);
+// });
 
 /*
 myEmitter.once('gSettingsUpdated', function() {
