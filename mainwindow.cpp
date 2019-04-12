@@ -17,6 +17,10 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent) {
 
 	setAcceptDrops(true);
 
+	QFont font("Lucida Grande");
+	font.setPixelSize(12);
+
+
 	dragPixmap = QPixmap(1, 1);
 
 
@@ -35,6 +39,7 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent) {
     foreach (QFileInfo info, list) {
 
 		DesktopIcon *button = new DesktopIcon(this);
+		button->setFont(font);
 		button->setPath(info.absoluteFilePath());
 		button->setIcon(iconProvider.icon(info));
 

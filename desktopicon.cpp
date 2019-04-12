@@ -1,8 +1,8 @@
 #include "desktopicon.h"
 #include <QPainter>
 #include <QIcon>
+#include <QFileInfo>
 #include <QDebug>
-#include <QApplication>
 
 
 QString splitText(QFontMetrics* fontMetrics, QString secondLine, int maxWidth) {
@@ -30,14 +30,9 @@ QStringList divideText(QFontMetrics* fontMetrics, QString text, int maxWidth) {
 	return {firstLine.trimmed(), secondLine.trimmed()};
 }
 
-DesktopIcon::DesktopIcon(QWidget *parent) : QWidget(parent) {
-	this->font = new QFont("Lucida Grande");
-	font->setPixelSize(12);
-}
+DesktopIcon::DesktopIcon(QWidget *parent) : QWidget(parent) {}
 
-DesktopIcon::~DesktopIcon() {
-	delete this->font;
-}
+DesktopIcon::~DesktopIcon() {}
 
 void DesktopIcon::setSelected(bool selected) {
 	if (this->selected != selected) {
@@ -159,7 +154,8 @@ void DesktopIcon::drawLine(QPainter *painter, QFontMetrics *fontMetrics, int y, 
 
 void DesktopIcon::paintEvent(QPaintEvent *event) {
 	QPainter painter(this);
-	painter.setFont(*this->font);
+
+	painter.setFont(this->font());
 	painter.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing, true);
 	QFontMetrics fontMetrics = painter.fontMetrics();
 
@@ -186,8 +182,4 @@ void DesktopIcon::paintEvent(QPaintEvent *event) {
 
 	QStringList splitted = divideText(&fontMetrics, this->name, width - paddingLeftRight * 2);
 	drawLine(&painter, &fontMetrics, height - doubleHeight, splitted.at(0), splitted.at(1), cccColor);
-
-
-//    painter.setPen(QColor("#FF0000"));
-//    painter.drawRect(QRect(0, 0, width, height));
 }

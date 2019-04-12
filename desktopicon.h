@@ -2,8 +2,7 @@
 #define DESKTOPICON_H
 
 #include <QWidget>
-#include <QFileInfo>
-#include <QIcon>s
+#include <QIcon>
 
 class DesktopIcon : public QWidget {
 
@@ -25,7 +24,6 @@ private:
 
 	QIcon icon;
 	QString path;
-	QFont* font;
 	QString name;
 	bool active = false;
 	bool selected = false;
@@ -45,11 +43,10 @@ public:
 	void setActive(bool active);
 	bool isSelected();
 
-public slots:
-
-    // QWidget interface
 protected:
-    void paintEvent(QPaintEvent *event);
+
+	void paintEvent(QPaintEvent *event);
+
 };
 
 #endif // DESKTOPICON_H
