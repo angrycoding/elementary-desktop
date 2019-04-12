@@ -13,20 +13,19 @@ class MainWindow : public QMainWindow {
 
 private:
 
-	QPoint origin;
 	QRubberBand* rubberBand;
 	bool isShiftPressed(QMouseEvent *event);
 	QPoint pressPoint;
 	QPixmap dragPixmap;
+	QList<DesktopIcon*> allIcons;
 
 
 public:
 
 	MainWindow(QWidget *parent = 0);
 	~MainWindow();
-	void unselectAll();
+	void setAllIconsSelection(bool selected);
 	void selectIcon(DesktopIcon* icon);
-
 
 
 protected:
