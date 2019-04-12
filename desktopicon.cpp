@@ -40,13 +40,17 @@ DesktopIcon::~DesktopIcon() {
 }
 
 void DesktopIcon::setSelected(bool selected) {
-	this->selected = selected;
-	this->update();
+	if (this->selected != selected) {
+		this->selected = selected;
+		this->update();
+	}
 }
 
 void DesktopIcon::setActive(bool active) {
-	this->active = active;
-	this->update();
+	if (this->active != active) {
+		this->active = active;
+		this->update();
+	}
 }
 
 bool DesktopIcon::isSelected() {

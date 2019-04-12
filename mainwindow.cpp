@@ -9,12 +9,18 @@
 #include <QMouseEvent>
 #include <QMimeData>
 
+QList<DesktopIcon*> allIcons;
 
 
 
 MainWindow::MainWindow(QWidget *parent): QMainWindow(parent) {
 
-    rubberBand = new QRubberBand(QRubberBand::Rectangle, this);
+	setAcceptDrops(true);
+
+	dragPixmap = QPixmap(1, 1);
+
+
+	rubberBand = new QRubberBand(QRubberBand::Rectangle, this);
 
     int iconWidth = 110;
     int iconHeight = 110;
@@ -32,6 +38,8 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent) {
 		button->setPath(info.absoluteFilePath());
 		button->setIcon(iconProvider.icon(info));
 
+		allIcons.push_back(button);
+
 
         button->resize(iconWidth, iconHeight);
         button->move(col * (iconWidth + 10), row * (iconHeight + 10));
@@ -46,127 +54,175 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent) {
 
 }
 
-
-
 MainWindow::~MainWindow() {
-    delete this->rubberBand;
+	delete this->rubberBand;
 }
-
-
 
 void MainWindow::unselectAll() {
-    auto list = this->findChildren<DesktopIcon*>();
-    for (int c = 0; c < list.length(); c++) {
-        list.at(c)->setSelected(false);
-    }
+	for (int c = 0; c < allIcons.length(); c++) {
+		allIcons.at(c)->setSelected(false);
+	}
 }
 
 
-
-
-
-void MainWindow::mouseDoubleClickEvent(QMouseEvent *event)
-{
-//    DesktopIcon* i = this->findChild<DesktopIcon*>();
-//    i->setSelected(true);
+bool MainWindow::isShiftPressed(QMouseEvent *event) {
+	Qt::KeyboardModifiers modifiers = event->modifiers();
+	return (
+		modifiers.testFlag(Qt::ShiftModifier) ||
+		modifiers.testFlag(Qt::ControlModifier)
+	);
 }
+
 
 void MainWindow::mousePressEvent(QMouseEvent *event) {
 
-    QWidget* widget = this->childAt(event->pos());
-    Qt::KeyboardModifiers modifiers = event->modifiers();
+	DesktopIcon* desktopIcon = dynamic_cast<DesktopIcon*>(this->childAt(event->pos()));
 
-    bool isShiftPressed = (
-        modifiers.testFlag(Qt::ShiftModifier) ||
-        modifiers.testFlag(Qt::ControlModifier)
-    );
+	if (!isShiftPressed(event) && (!desktopIcon || !desktopIcon->isSelected())) {
+		unselectAll();
+	}
 
-    isDragging = false;
+	if (desktopIcon) {
+		desktopIcon->setSelected(true);
 
-    if (widget) {
-        if (QString(widget->metaObject()->className()) == "DesktopIcon") {
+		int minLeft = width();
+		int minTop = height();
+		int maxRight = 0;
+		int maxBottom = 0;
+
+		for (int c = 0; c < allIcons.length(); c++) {
+			if (!allIcons.at(c)->isSelected()) continue;
+			DesktopIcon* desktopIcon = allIcons.at(c);
+			QRect desktopIconRect = desktopIcon->geometry();
+			minLeft = qMin(minLeft, desktopIconRect.left());
+			minTop = qMin(minTop, desktopIconRect.top());
+			maxRight = qMax(maxRight, desktopIconRect.right());
+			maxBottom = qMax(maxBottom, desktopIconRect.bottom());
+		}
+
+		int pmWidth = maxRight - minLeft + 1;
+		int pmHeight = maxBottom - minTop + 1;
+		dragPixmap = dragPixmap.scaled(pmWidth, pmHeight);
+		dragPixmap.fill(QColor("transparent"));
 
 
-            DesktopIcon* icon = (DesktopIcon*)widget;
-
-            if (!icon->isSelected()) {
-                if (!isShiftPressed) unselectAll();
-                icon->setSelected(true);
-            } else if (isShiftPressed) {
-                icon->setSelected(false);
-            }
-
-            isDragging = true;
+		for (int c = 0; c < allIcons.length(); c++) {
+			if (!allIcons.at(c)->isSelected()) continue;
+			DesktopIcon* desktopIcon = allIcons.at(c);
+			desktopIcon->render(&dragPixmap, QPoint(desktopIcon->x() - minLeft, desktopIcon->y() - minTop), QRegion(), 0);
+		}
 
 
+		pressPoint = QPoint(event->x() - minLeft, event->y() - minTop);
 
-        }
-    }
+	}
 
-    else {
-        unselectAll();
-        origin = event->pos();
-        rubberBand->setGeometry(QRect(origin, QSize()));
-        rubberBand->show();
-    }
+
+	else {
+		pressPoint = event->pos();
+		rubberBand->setGeometry(QRect(origin, QSize()));
+		rubberBand->show();
+		for (int c = 0; c < allIcons.length(); c++) {
+			DesktopIcon* desktopIcon = allIcons.at(c);
+			desktopIcon->setProperty("selected", desktopIcon->isSelected());
+		}
+	}
+
 
 }
 
 void MainWindow::mouseMoveEvent(QMouseEvent *event) {
 
+	if (rubberBand->isVisible()) {
+		QRect selectionArea = QRect(pressPoint, event->pos());
+		rubberBand->setGeometry(selectionArea.normalized());
+		for (int c = 0; c < allIcons.length(); c++) {
+			DesktopIcon* desktopIcon = allIcons.at(c);
+			bool savedState = desktopIcon->property("selected").toBool();
+			if (selectionArea.intersects(desktopIcon->geometry())) {
+				savedState = !savedState;
+			}
+			desktopIcon->setSelected(savedState);
+		}
+	}
 
-    if (isDragging) {
+	else {
 
-        auto list = this->findChildren<DesktopIcon*>();
-        for (int c = 0; c < list.length(); c++) {
-            if (list.at(c)->isSelected()) {
+		QDrag dragger(this);
+		QList<QUrl> urls;
+		QMimeData *mimeData = new QMimeData;
 
-                DesktopIcon* di = list.at(c);
+		for (int c = 0; c < allIcons.length(); c++) {
+			if (!allIcons.at(c)->isSelected()) continue;
+			DesktopIcon* di = allIcons.at(c);
+			urls.push_back(di->getPath());
 
-                QPixmap pm(di->size());
-                pm.fill(QColor("transparent"));
-                di->render(&pm, QPoint(), QRegion(), 0);
+		}
 
-                QDrag dragger(this);
-                QMimeData *mimeData = new QMimeData;
-                QString filename = "/Users/ruslanmatveev/Desktop/1.png";
-                mimeData->setData("text/uri-list", filename.toUtf8());
-                dragger.setMimeData(mimeData);
-                dragger.setPixmap(pm);
-                dragger.setHotSpot(QPoint(50, 50));
-                qDebug() << dragger.exec(Qt::CopyAction);
+		mimeData->setUrls(urls);
+		dragger.setMimeData(mimeData);
+		dragger.setPixmap(dragPixmap);
+		dragger.setHotSpot(pressPoint);
+		qDebug() << dragger.exec(Qt::CopyAction);
 
-                break;
-            }
-        }
-
-
-
-
-    } else {
-        rubberBand->setGeometry(QRect(origin, event->pos()).normalized());
-    }
+//		QKeySequence::SelectAll
+	}
 
 }
-
-bool MainWindow::event(QEvent *event) {
-    if (event->type() == QEvent::WindowActivate ||
-            event->type() == QEvent::WindowDeactivate) {
-        auto list = this->findChildren<DesktopIcon*>();
-        for (int c = 0; c < list.length(); c++) {
-            list.at(c)->setActive(event->type() == QEvent::WindowActivate);
-        }
-    }
-
-    return QWidget::event(event);
-}
-
 
 void MainWindow::mouseReleaseEvent(QMouseEvent *event) {
-    if (rubberBand->isVisible()) {
-        qDebug() << rubberBand->pos() << rubberBand->size();
-        rubberBand->hide();
-    }
-    isDragging = false;
+
+	DesktopIcon* desktopIcon = dynamic_cast<DesktopIcon*>(this->childAt(event->pos()));
+
+
+//	if (isShiftPressed(event)) {
+//		if (desktopIcon)
+//		return;
+//	}
+
+	if (rubberBand->isVisible()) {
+		qDebug() << rubberBand->pos() << rubberBand->size();
+		rubberBand->hide();
+	}
+
+
+
 }
 
+
+bool MainWindow::event(QEvent *event) {
+	if (event->type() == QEvent::WindowActivate || event->type() == QEvent::WindowDeactivate) {
+		for (int c = 0; c < allIcons.length(); c++) {
+			allIcons.at(c)->setActive(event->type() == QEvent::WindowActivate);
+		}
+	}
+	return QWidget::event(event);
+}
+
+void MainWindow::keyPressEvent(QKeyEvent *event) {
+	if (event->matches(QKeySequence::SelectAll)) {
+		for (int c = 0; c < allIcons.length(); c++) {
+			allIcons.at(c)->setSelected(true);
+		}
+	}
+}
+
+void MainWindow::dropEvent(QDropEvent *event) {
+	qDebug() << event->dropAction();
+}
+
+void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
+	qDebug() << event->possibleActions();
+	qDebug() << "DragEnter";
+	qDebug() << event->mimeData()->urls();
+	qDebug() << event->dropAction();
+	qDebug() << event->proposedAction();
+//	event->setDropAction(Qt::CopyAction);
+	event->setDropAction(Qt::MoveAction);
+	event->acceptProposedAction();
+}
+
+void MainWindow::dragMoveEvent(QDragMoveEvent *event) {
+	event->setDropAction(Qt::MoveAction);
+//	event->set
+}
