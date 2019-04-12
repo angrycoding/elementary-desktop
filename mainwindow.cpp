@@ -24,13 +24,17 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent) {
     int row = 0;
     int col = 0;
 
+	QFileIconProvider iconProvider;
 
     foreach (QFileInfo info, list) {
 
-        DesktopIcon *button = new DesktopIcon(this);
+		DesktopIcon *button = new DesktopIcon(this);
+		button->setPath(info.absoluteFilePath());
+		button->setIcon(iconProvider.icon(info));
+
+
         button->resize(iconWidth, iconHeight);
         button->move(col * (iconWidth + 10), row * (iconHeight + 10));
-        button->setFileInfo(info);
 
         col++;
         if (col > 6) {
