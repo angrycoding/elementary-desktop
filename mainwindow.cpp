@@ -8,17 +8,20 @@
 #include <QFileIconProvider>
 #include <QMouseEvent>
 #include <QMimeData>
-
-
-
+#include <QtMath>
+#include <QApplication>
+#include <QDesktopWidget>
+#include <QCursor>
 
 
 MainWindow::MainWindow(QWidget *parent): QMainWindow(parent) {
+
 
 	setAcceptDrops(true);
 
 	QFont font("Lucida Grande");
 	font.setPixelSize(12);
+	font.setStyleStrategy(QFont::PreferAntialias);
 
 
 	dragPixmap = QPixmap(1, 1);
@@ -26,17 +29,17 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent) {
 
 	rubberBand = new QRubberBand(QRubberBand::Rectangle, this);
 
-    int iconWidth = 110;
-    int iconHeight = 110;
+	int iconWidth = 110;
+	int iconHeight = 110;
 
-    auto list = QDir("/Users/ruslanmatveev").entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries);
+	auto list = QDir("/home/ruslan").entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries);
 
-    int row = 0;
-    int col = 0;
+	int row = 0;
+	int col = 0;
 
 	QFileIconProvider iconProvider;
 
-    foreach (QFileInfo info, list) {
+	foreach (QFileInfo info, list) {
 
 		DesktopIcon *button = new DesktopIcon(this);
 		button->setFont(font);
@@ -46,15 +49,15 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent) {
 		allIcons.push_back(button);
 
 
-        button->resize(iconWidth, iconHeight);
-        button->move(col * (iconWidth + 10), row * (iconHeight + 10));
+		button->resize(iconWidth, iconHeight);
+		button->move(col * (iconWidth + 10), row * (iconHeight + 10));
 
-        col++;
-        if (col > 6) {
-            col = 0;
-            row++;
-        }
-    }
+		col++;
+		if (col > 6) {
+			col = 0;
+			row++;
+		}
+	}
 
 
 }
@@ -73,8 +76,8 @@ void MainWindow::setAllIconsSelection(bool selected) {
 bool MainWindow::isShiftPressed(QMouseEvent *event) {
 	Qt::KeyboardModifiers modifiers = event->modifiers();
 	return (
-		modifiers.testFlag(Qt::ShiftModifier) ||
-		modifiers.testFlag(Qt::ControlModifier)
+	modifiers.testFlag(Qt::ShiftModifier) ||
+	modifiers.testFlag(Qt::ControlModifier)
 	);
 }
 
@@ -167,6 +170,13 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event) {
 		dragger.setMimeData(mimeData);
 		dragger.setPixmap(dragPixmap);
 		dragger.setHotSpot(pressPoint);
+
+
+//		QPixmap pm = QCursor(Qt::PointingHandCursor).pixmap();
+//		qDebug() << pm;
+//		QPixmap pm = new QPixmap();
+//		dragger.setDragCursor(pm, Qt::MoveAction);
+
 		qDebug() << dragger.exec(Qt::CopyAction | Qt::MoveAction, Qt::MoveAction) << 1;
 
 //		QKeySequence::SelectAll
@@ -246,5 +256,81 @@ void MainWindow::dragMoveEvent(QDragMoveEvent *event) {
 
 //	event->setDropAction(Qt::IgnoreAction);
 //	event->acceptProposedAction();
-//	event->set
+	//	event->set
+}
+
+void MainWindow::resizeEvent(QResizeEvent *event) {
+
+//	int width = this->width();
+//	int height = this->height();
+
+//	int iconSize = width / 12;
+
+//	qDebug() << width << iconSize;
+
+//	foreach (DesktopIcon* desktopIcon, allIcons) {
+//		desktopIcon->resize(iconSize, iconSize);
+	//	}
+}
+
+
+int desiredCols = 13;
+int desiredRows = 7;
+
+void MainWindow::paintEvent(QPaintEvent *event) {
+
+
+	return;
+	QPainter painter(this);
+
+	painter.setPen(QColor("red"));
+
+
+	int width = this->width();
+	int height = this->height();
+
+	int cellWidth = width / desiredCols;
+	int cellHeight = height / desiredRows;
+
+	int cellSize = qMin(cellWidth, cellHeight);
+
+
+	qreal offsetX = (width - cellSize * desiredCols) / 2;
+	qreal offsetY = (height - cellSize * desiredRows) / 2;
+
+	painter.translate(offsetX, offsetY);
+
+	painter.drawRect(0, 0, cellSize * desiredCols, cellSize * desiredRows);
+
+
+
+
+	for (int c = 1; c < desiredCols; c++) {
+		painter.drawLine(c * cellSize, 0, c * cellSize, cellSize * desiredRows);
+	}
+
+	for (int c = 1; c < desiredRows; c++) {
+		painter.drawLine(0, c * cellSize, cellSize * desiredCols, c * cellSize);
+	}
+
+	int col = 0;
+	int row = 0;
+	foreach (DesktopIcon* desktopIcon, allIcons) {
+
+		desktopIcon->setGeometry(
+		offsetX + col * cellSize,
+		offsetY + row * cellSize,
+		cellSize,
+		cellSize
+		);
+
+		col++;
+
+		if (col > desiredCols) {
+			col = 0;
+			row++;
+		}
+
+//		desktopIcon->resize(cellSize, cellSize);
+	}
 }

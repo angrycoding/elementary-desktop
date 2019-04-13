@@ -2,8 +2,6 @@
 #include <QPainter>
 #include <QIcon>
 #include <QFileInfo>
-#include <QDebug>
-
 
 QString splitText(QFontMetrics* fontMetrics, QString secondLine, int maxWidth) {
 	QString result = "";
@@ -51,7 +49,6 @@ void DesktopIcon::setActive(bool active) {
 bool DesktopIcon::isSelected() {
 	return selected;
 }
-
 
 void DesktopIcon::setIcon(const QIcon &icon) {
 	this->icon = icon;
@@ -117,7 +114,19 @@ QPainterPath DesktopIcon::buildRoundedRectPath(QRect rect, uint8_t border) {
 	return path;
 }
 
-void DesktopIcon::drawLine(QPainter *painter, QFontMetrics *fontMetrics, int y, QString text, QString text2, QColor color) {
+void DesktopIcon::drawLine(QPainter *painter, QFontMetrics *fontMetrics, int y, QString text, QString text2) {
+
+	QColor color = (
+		selected && active ? activeSelectionBgColor :
+		selected ? inactiveSelectionBgColor :
+		bgColor
+	);
+
+	painter->setPen(
+		selected && active ? activeSelectionTextColor :
+		selected ? inactiveSelectionTextColor :
+		textColor
+	);
 
 	QRect text1Rect = fontMetrics->boundingRect(text);
 	QRect text2Rect = fontMetrics->boundingRect(text2);
@@ -137,6 +146,7 @@ void DesktopIcon::drawLine(QPainter *painter, QFontMetrics *fontMetrics, int y, 
 	QRect box1((this->width() - text1Width) / 2, y, text1Width, text1Height);
 
 	painter->fillPath(buildRoundedRectPath(box1, myFlag ? TOP_INSET : TOP_INSET | BOTTOM_INSET), color);
+
 	painter->drawText(box1, Qt::AlignCenter | Qt::AlignHCenter, text);
 
 	if (text2.length() == 0) return;
@@ -147,39 +157,20 @@ void DesktopIcon::drawLine(QPainter *painter, QFontMetrics *fontMetrics, int y, 
 
 }
 
-
-
-
-
-
 void DesktopIcon::paintEvent(QPaintEvent *event) {
 	QPainter painter(this);
 
 	painter.setFont(this->font());
-	painter.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing, true);
+	painter.setRenderHints(QPainter::HighQualityAntialiasing | QPainter::TextAntialiasing, true);
 	QFontMetrics fontMetrics = painter.fontMetrics();
 
-
-    int width = this->width();
-    int height = this->height();
-
+	int width = this->width();
+	int height = this->height();
 	int doubleHeight = fontMetrics.height() * 2 + paddingTopBottom * 3;
-
 	int iconSize = qMin(width, height - doubleHeight - iconTextGap);
-
-
-    painter.setPen(QColor(selected && !active ? "#6C6C6C" : "#FFFFFF"));
-
-
-    QColor cccColor = (
-        selected && active ? QColor("#3067D2") :
-        selected ? QColor("#D0D0D0") :
-        QColor(Qt::transparent)
-    );
-
 
 	painter.drawPixmap((width - iconSize) / 2, 0, iconSize, iconSize, icon.pixmap(iconSize, iconSize));
 
 	QStringList splitted = divideText(&fontMetrics, this->name, width - paddingLeftRight * 2);
-	drawLine(&painter, &fontMetrics, height - doubleHeight, splitted.at(0), splitted.at(1), cccColor);
+	drawLine(&painter, &fontMetrics, height - doubleHeight, splitted.at(0), splitted.at(1));
 }

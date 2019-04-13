@@ -18,7 +18,7 @@ private:
 	};
 
 	uint8_t iconTextGap = 3;
-	uint8_t borderRadius = 4;
+	uint8_t borderRadius = 5;
 	uint8_t paddingLeftRight = 5;
 	uint8_t paddingTopBottom = 3;
 
@@ -28,8 +28,16 @@ private:
 	bool active = false;
 	bool selected = false;
 
+	QColor bgColor = QColor("transparent");
+	QColor activeSelectionBgColor = QColor("#3067D2");
+	QColor inactiveSelectionBgColor = QColor("#D0D0D0");
+
+	QColor textColor = QColor("#FFFFFF");
+	QColor activeSelectionTextColor = QColor("#FFFFFF");
+	QColor inactiveSelectionTextColor = QColor("#6C6C6C");
+
 	QPainterPath buildRoundedRectPath(QRect rect, uint8_t border);
-	void drawLine(QPainter *painter, QFontMetrics* fontMetrics, int y, QString text, QString text2, QColor color);
+	void drawLine(QPainter *painter, QFontMetrics* fontMetrics, int y, QString text, QString text2);
 
 public:
 
