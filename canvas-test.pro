@@ -25,13 +25,15 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += c++11
 
 SOURCES += \
-        main.cpp \
-        mainwindow.cpp \
-    desktopicon.cpp
+    desktopicon.cpp \
+    main.cpp \
+    mainwindow.cpp
 
 HEADERS += \
         mainwindow.h \
-    desktopicon.h
+    desktopicon.h \
+    mainwindow.h
+
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

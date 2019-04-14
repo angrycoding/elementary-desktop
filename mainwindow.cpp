@@ -12,54 +12,64 @@
 #include <QApplication>
 #include <QDesktopWidget>
 #include <QCursor>
+#include <QHash>
+#include <QDateTime>
 
+
+int iconWidth = 110;
+int iconHeight = 110;
+QHash<QString, DesktopIcon*> newList;
+
+
+int rangedRand(unsigned int min, unsigned int max){
+	return (qrand() % (max+1-min)) + min;
+}
+
+void MainWindow::updateDesktop(QStringList files) {
+
+	foreach (QString path, newList.keys()) {
+		DesktopIcon *desktopIcon = newList[path];
+		if (!files.contains(path)) {
+			newList.remove(path);
+			delete desktopIcon;
+		}
+	}
+
+	foreach (QString path, files) {
+		if (newList.contains(path)) continue;
+
+		int x = rangedRand(50, 1000);
+		int y = rangedRand(50, 700);
+
+		DesktopIcon *button = new DesktopIcon(this);
+		button->setFont(this->font());
+		button->setPath(path);
+		button->setIcon(iconProvider.icon(QFileInfo(path)));
+
+		qDebug() << path << QFileInfo(path).birthTime() << QFileInfo(path).size() << QFileInfo(path);
+
+		button->setParent(this);
+
+		button->resize(iconWidth, iconHeight);
+		button->move(x, y);
+		button->show();
+
+		newList.insert(path, button);
+	}
+
+
+}
 
 MainWindow::MainWindow(QWidget *parent): QMainWindow(parent) {
-
 
 	setAcceptDrops(true);
 
 	QFont font("Lucida Grande");
 	font.setPixelSize(12);
 	font.setStyleStrategy(QFont::PreferAntialias);
-
-
+	this->setFont(font);
 	dragPixmap = QPixmap(1, 1);
-
-
 	rubberBand = new QRubberBand(QRubberBand::Rectangle, this);
-
-	int iconWidth = 110;
-	int iconHeight = 110;
-
-	auto list = QDir("/home/ruslan").entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries);
-
-	int row = 0;
-	int col = 0;
-
-	QFileIconProvider iconProvider;
-
-	foreach (QFileInfo info, list) {
-
-		DesktopIcon *button = new DesktopIcon(this);
-		button->setFont(font);
-		button->setPath(info.absoluteFilePath());
-		button->setIcon(iconProvider.icon(info));
-
-		allIcons.push_back(button);
-
-
-		button->resize(iconWidth, iconHeight);
-		button->move(col * (iconWidth + 10), row * (iconHeight + 10));
-
-		col++;
-		if (col > 6) {
-			col = 0;
-			row++;
-		}
-	}
-
-
 }
 
 MainWindow::~MainWindow() {
@@ -67,20 +77,18 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::setAllIconsSelection(bool selected) {
-	foreach (DesktopIcon* desktopIcon, allIcons) {
+	foreach (DesktopIcon* desktopIcon, newList) {
 		desktopIcon->setSelected(selected);
 	}
 }
 
-
 bool MainWindow::isShiftPressed(QMouseEvent *event) {
 	Qt::KeyboardModifiers modifiers = event->modifiers();
 	return (
-	modifiers.testFlag(Qt::ShiftModifier) ||
-	modifiers.testFlag(Qt::ControlModifier)
+		modifiers.testFlag(Qt::ShiftModifier) ||
+		modifiers.testFlag(Qt::ControlModifier)
 	);
 }
-
 
 void MainWindow::mousePressEvent(QMouseEvent *event) {
 
@@ -99,7 +107,7 @@ void MainWindow::mousePressEvent(QMouseEvent *event) {
 		int maxBottom = 0;
 
 
-		foreach (DesktopIcon* desktopIcon, allIcons) {
+		foreach (DesktopIcon* desktopIcon, newList) {
 			if (!desktopIcon->isSelected()) continue;
 			QRect desktopIconRect = desktopIcon->geometry();
 			minLeft = qMin(minLeft, desktopIconRect.left());
@@ -114,7 +122,7 @@ void MainWindow::mousePressEvent(QMouseEvent *event) {
 		dragPixmap.fill(QColor("transparent"));
 
 
-		foreach (DesktopIcon* desktopIcon, allIcons) {
+		foreach (DesktopIcon* desktopIcon, newList) {
 			if (!desktopIcon->isSelected()) continue;
 			desktopIcon->render(&dragPixmap, QPoint(desktopIcon->x() - minLeft, desktopIcon->y() - minTop), QRegion(), 0);
 		}
@@ -129,7 +137,7 @@ void MainWindow::mousePressEvent(QMouseEvent *event) {
 		pressPoint = event->pos();
 		rubberBand->setGeometry(QRect(pressPoint, QSize()));
 		rubberBand->show();
-		foreach (DesktopIcon* desktopIcon, allIcons) {
+		foreach (DesktopIcon* desktopIcon, newList) {
 			desktopIcon->setProperty("selected", desktopIcon->isSelected());
 		}
 	}
@@ -142,7 +150,7 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event) {
 	if (rubberBand->isVisible()) {
 		QRect selectionArea = QRect(pressPoint, event->pos());
 		rubberBand->setGeometry(selectionArea.normalized());
-		foreach (DesktopIcon* desktopIcon, allIcons) {
+		foreach (DesktopIcon* desktopIcon, newList) {
 			bool savedState = desktopIcon->property("selected").toBool();
 			if (selectionArea.intersects(desktopIcon->geometry())) {
 				savedState = !savedState;
@@ -160,7 +168,7 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event) {
 		QMimeData *mimeData = new QMimeData;
 
 
-		foreach (DesktopIcon* desktopIcon, allIcons) {
+		foreach (DesktopIcon* desktopIcon, newList) {
 			if (!desktopIcon->isSelected()) continue;
 			urls.push_back(desktopIcon->getPath());
 
@@ -202,10 +210,9 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *event) {
 
 }
 
-
 bool MainWindow::event(QEvent *event) {
 	if (event->type() == QEvent::WindowActivate || event->type() == QEvent::WindowDeactivate) {
-		foreach (DesktopIcon* desktopIcon, allIcons) {
+		foreach (DesktopIcon* desktopIcon, newList) {
 			desktopIcon->setActive(event->type() == QEvent::WindowActivate);
 		}
 	}
@@ -223,7 +230,7 @@ void MainWindow::dropEvent(QDropEvent *event) {
 
 	event->acceptProposedAction();
 
-	foreach (DesktopIcon* desktopIcon, allIcons) {
+	foreach (DesktopIcon* desktopIcon, newList) {
 		if (!desktopIcon->isSelected()) continue;
 		qDebug() << "HERE???" << event->pos();
 		desktopIcon->move(event->pos() - pressPoint);
@@ -257,80 +264,4 @@ void MainWindow::dragMoveEvent(QDragMoveEvent *event) {
 //	event->setDropAction(Qt::IgnoreAction);
 //	event->acceptProposedAction();
 	//	event->set
-}
-
-void MainWindow::resizeEvent(QResizeEvent *event) {
-
-//	int width = this->width();
-//	int height = this->height();
-
-//	int iconSize = width / 12;
-
-//	qDebug() << width << iconSize;
-
-//	foreach (DesktopIcon* desktopIcon, allIcons) {
-//		desktopIcon->resize(iconSize, iconSize);
-	//	}
-}
-
-
-int desiredCols = 13;
-int desiredRows = 7;
-
-void MainWindow::paintEvent(QPaintEvent *event) {
-
-
-	return;
-	QPainter painter(this);
-
-	painter.setPen(QColor("red"));
-
-
-	int width = this->width();
-	int height = this->height();
-
-	int cellWidth = width / desiredCols;
-	int cellHeight = height / desiredRows;
-
-	int cellSize = qMin(cellWidth, cellHeight);
-
-
-	qreal offsetX = (width - cellSize * desiredCols) / 2;
-	qreal offsetY = (height - cellSize * desiredRows) / 2;
-
-	painter.translate(offsetX, offsetY);
-
-	painter.drawRect(0, 0, cellSize * desiredCols, cellSize * desiredRows);
-
-
-
-
-	for (int c = 1; c < desiredCols; c++) {
-		painter.drawLine(c * cellSize, 0, c * cellSize, cellSize * desiredRows);
-	}
-
-	for (int c = 1; c < desiredRows; c++) {
-		painter.drawLine(0, c * cellSize, cellSize * desiredCols, c * cellSize);
-	}
-
-	int col = 0;
-	int row = 0;
-	foreach (DesktopIcon* desktopIcon, allIcons) {
-
-		desktopIcon->setGeometry(
-		offsetX + col * cellSize,
-		offsetY + row * cellSize,
-		cellSize,
-		cellSize
-		);
-
-		col++;
-
-		if (col > desiredCols) {
-			col = 0;
-			row++;
-		}
-
-//		desktopIcon->resize(cellSize, cellSize);
-	}
 }

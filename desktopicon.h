@@ -29,7 +29,7 @@ private:
 	bool selected = false;
 
 	QColor bgColor = QColor("transparent");
-	QColor activeSelectionBgColor = QColor("#3067D2");
+	QColor activeSelectionBgColor = QColor("#308CC6");
 	QColor inactiveSelectionBgColor = QColor("#D0D0D0");
 
 	QColor textColor = QColor("#FFFFFF");

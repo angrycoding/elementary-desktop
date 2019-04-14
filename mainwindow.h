@@ -5,6 +5,8 @@
 #include <QPainter>
 #include <QRubberBand>
 #include <QDrag>
+#include <QProcess>
+#include <QFileIconProvider>
 #include "desktopicon.h"
 
 class MainWindow : public QMainWindow {
@@ -14,14 +16,15 @@ class MainWindow : public QMainWindow {
 private:
 
 	QRubberBand* rubberBand;
+	QFileIconProvider iconProvider;
 	bool isShiftPressed(QMouseEvent *event);
 	QPoint pressPoint;
 	QPixmap dragPixmap;
-	QList<DesktopIcon*> allIcons;
 
 
 public:
 
+	void updateDesktop(QStringList files);
 	MainWindow(QWidget *parent = 0);
 	~MainWindow();
 	void setAllIconsSelection(bool selected);
@@ -38,30 +41,12 @@ public:
 
 	bool event(QEvent *event);
 
-
-	// QWidget interface
 protected:
 	void keyPressEvent(QKeyEvent *event);
-
-	// QWidget interface
-protected:
 	void dropEvent(QDropEvent *event);
-
-	// QWidget interface
-protected:
 	void dragEnterEvent(QDragEnterEvent *event);
-
-	// QWidget interface
-protected:
 	void dragMoveEvent(QDragMoveEvent *event);
 
-	// QWidget interface
-protected:
-	void resizeEvent(QResizeEvent *event);
-
-	// QWidget interface
-protected:
-	void paintEvent(QPaintEvent *event);
 };
 
 #endif // MAINWINDOW_H

@@ -1,29 +1,88 @@
 #include "mainwindow.h"
+#include <signal.h>
 #include <QApplication>
 #include <QtDebug>
-#include <QGuiApplication>
+#include <QDir>
 #include <QDesktopWidget>
+#include <QFileSystemWatcher>
 
-int main(int argc, char *argv[])
-{
-	QApplication a(argc, argv);
-	MainWindow w;
-	w.setStyleSheet("background-color: #017C7B" );
+QProcess process;
+
+static void m_cleanup(int sig) {
+	process.kill();
+}
+
+static void setupHandlers(QApplication *application) {
+	signal(SIGKILL, m_cleanup);
+	signal(SIGINT, m_cleanup);
+	signal(SIGQUIT, m_cleanup);
+	signal(SIGTERM, m_cleanup);
+	signal(SIGHUP, m_cleanup);
+	process.setEnvironment( QProcess::systemEnvironment() );
+	process.setProcessChannelMode( QProcess::MergedChannels );
+	process.start("gsettings",  QStringList{"monitor", "org.gnome.desktop.interface", "icon-theme"});
+	process.waitForStarted();
+	QObject::connect(&process, &QProcess::readyReadStandardOutput, []() {
+		m_cleanup(0);
+		QProcess::startDetached(QApplication::applicationFilePath());
+		exit(12);
+	});
+	QObject::connect(application, &QApplication::aboutToQuit, [](){
+		m_cleanup(0);
+	});
+}
+
+QString DESKTOP_DIR_PATH = "/home/ruslan";
+
+static void updateDesktop(MainWindow *window) {
+	QStringList files;
+	auto list = QDir(DESKTOP_DIR_PATH).entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries);
+	foreach (QFileInfo info, list) files.push_front(info.absoluteFilePath());
+	window->updateDesktop(files);
+}
+
+int main(int argc, char *argv[]) {
+	QApplication application(argc, argv);
+	MainWindow window;
 
 
-	w.setAttribute(Qt::WA_TranslucentBackground);
-	w.setWindowFlag(Qt::WindowStaysOnBottomHint, true);
+//	setupHandlers(&application);
+
+
+
+	QFileSystemWatcher watcher;
+	watcher.addPath(DESKTOP_DIR_PATH);
+
+	QObject::connect(&watcher, &QFileSystemWatcher::directoryChanged, [&window](){
+		updateDesktop(&window);
+	});
+
+//	QObject::connect(&watcher, &QFileSystemWatcher::fileChanged, [&window](){
+//		qDebug() << "CHANGED?";
+//		updateDesktop(&window);
+//	});
+
+
+
+	updateDesktop(&window);
+
+
+	window.setStyleSheet("background-color: #017C7B" );
+
+
+	window.setAttribute(Qt::WA_TranslucentBackground);
+	window.setWindowFlag(Qt::WindowStaysOnBottomHint, true);
 //	w.setWindowFlag(Qt::Desktop, true);
-	w.setAttribute(Qt::WA_X11NetWmWindowTypeDesktop, true);
+	window.setAttribute(Qt::WA_X11NetWmWindowTypeDesktop, true);
 
-	w.setGeometry(QApplication::desktop()->geometry());
+	window.setGeometry(QApplication::desktop()->geometry());
 //	w.move(100, 100);
 //	w.resize(600, 600);
 
 
-	w.show();
-//
+	window.show();
 
 
-	return a.exec();
+
+	return application.exec();
 }
