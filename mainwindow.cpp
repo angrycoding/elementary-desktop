@@ -20,9 +20,9 @@
 
 QHash<QString, DesktopIcon*> newList;
 
-int desiredCols = 14;
-int desiredRows = 8;
-int desiredSpacing = 12;
+int desiredCols = 12;
+int desiredRows = 7;
+int desiredSpacing = 10;
 int OFFSET_X = 0;
 int OFFSET_Y = 0;
 int W_WIDTH = 0;
@@ -335,7 +335,7 @@ void MainWindow::dragMoveEvent(QDragMoveEvent *event) {
 
 void MainWindow::paintEvent(QPaintEvent *event) {
 	QPainter painter(this);
-	painter.setPen(QPen(QColor("#000000"), 0.4, Qt::DotLine));
+	painter.setPen(QPen(QColor("#FF0000"), 0.4, Qt::DotLine));
 
 
 	painter.drawRect(OFFSET_X, OFFSET_Y, this->width() - OFFSET_X * 2, this->height() - OFFSET_Y * 2);

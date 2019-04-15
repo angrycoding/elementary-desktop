@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
 		window.setAttribute(Qt::WA_TranslucentBackground);
 		window.setWindowFlag(Qt::WindowStaysOnBottomHint, true);
 		window.setAttribute(Qt::WA_X11NetWmWindowTypeDesktop, true);
-		window.setGeometry(QApplication::desktop()->geometry());
+		window.setGeometry(QApplication::desktop()->availableGeometry());
 	}
 
 	updateDesktop(&window);
