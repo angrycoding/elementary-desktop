@@ -15,7 +15,6 @@
 #include <QHash>
 #include <QDateTime>
 #include <QObject>
-#include <QPropertyAnimation>
 
 
 QHash<QString, DesktopIcon*> newList;
