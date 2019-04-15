@@ -16,8 +16,7 @@
 #include <QDateTime>
 
 
-int iconWidth = 110;
-int iconHeight = 110;
+int iconSizeX = 110;
 QHash<QString, DesktopIcon*> newList;
 
 
@@ -50,7 +49,7 @@ void MainWindow::updateDesktop(QStringList files) {
 
 		button->setParent(this);
 
-		button->resize(iconWidth, iconHeight);
+		button->resize(iconSizeX, iconSizeX);
 		button->move(x, y);
 		button->show();
 
@@ -61,9 +60,7 @@ void MainWindow::updateDesktop(QStringList files) {
 }
 
 MainWindow::MainWindow(QWidget *parent): QMainWindow(parent) {
-
 	setAcceptDrops(true);
-
 	QFont font("Lucida Grande");
 	font.setPixelSize(12);
 	font.setStyleStrategy(QFont::PreferAntialias);

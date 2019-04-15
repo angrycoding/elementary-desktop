@@ -5,8 +5,18 @@
 #include <QDir>
 #include <QDesktopWidget>
 #include <QFileSystemWatcher>
+#include <QStandardPaths>
 
 QProcess process;
+QString DESKTOP_DIR_PATH = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+
+static bool isMac() {
+	#ifdef Q_OS_MAC
+		return true;
+	#else
+		return false;
+	#endif
+}
 
 static void m_cleanup(int sig) {
 	process.kill();
@@ -32,7 +42,6 @@ static void setupHandlers(QApplication *application) {
 	});
 }
 
-QString DESKTOP_DIR_PATH = "/home/ruslan";
 
 static void updateDesktop(MainWindow *window) {
 	QStringList files;
@@ -47,8 +56,6 @@ int main(int argc, char *argv[]) {
 
 
 //	setupHandlers(&application);
-
-
 
 	QFileSystemWatcher watcher;
 	watcher.addPath(DESKTOP_DIR_PATH);
@@ -65,24 +72,20 @@ int main(int argc, char *argv[]) {
 
 
 	updateDesktop(&window);
+	window.setStyleSheet("background-color: #5979AE" );
 
+	if (isMac()) {
+		window.resize(1600, 900);
+	}
 
-	window.setStyleSheet("background-color: #017C7B" );
-
-
-	window.setAttribute(Qt::WA_TranslucentBackground);
-	window.setWindowFlag(Qt::WindowStaysOnBottomHint, true);
-//	w.setWindowFlag(Qt::Desktop, true);
-	window.setAttribute(Qt::WA_X11NetWmWindowTypeDesktop, true);
-
-	window.setGeometry(QApplication::desktop()->geometry());
-//	w.move(100, 100);
-//	w.resize(600, 600);
-
+	else {
+		window.setAttribute(Qt::WA_TranslucentBackground);
+		window.setWindowFlag(Qt::WindowStaysOnBottomHint, true);
+		window.setAttribute(Qt::WA_X11NetWmWindowTypeDesktop, true);
+		window.setGeometry(QApplication::desktop()->geometry());
+	}
 
 	window.show();
-
-
 
 	return application.exec();
 }
