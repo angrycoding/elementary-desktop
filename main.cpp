@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
 
 
 
-	window.setStyleSheet("background-color: #5979AE" );
+	window.setStyleSheet("QMainWindow { background-color: #5979AE; }" );
 
 	if (isMac()) {
 		window.resize(1600, 900);
