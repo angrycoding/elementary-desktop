@@ -159,18 +159,19 @@ void DesktopIcon::drawLine(QPainter *painter, QFontMetrics *fontMetrics, int y, 
 
 void DesktopIcon::paintEvent(QPaintEvent *event) {
 	QPainter painter(this);
-
 	painter.setFont(this->font());
 	painter.setRenderHints(QPainter::HighQualityAntialiasing | QPainter::TextAntialiasing, true);
 	QFontMetrics fontMetrics = painter.fontMetrics();
-
 	int width = this->width();
 	int height = this->height();
 	int doubleHeight = fontMetrics.height() * 2 + paddingTopBottom * 3;
 	int iconSize = qMin(width, height - doubleHeight - iconTextGap);
-
 	painter.drawPixmap((width - iconSize) / 2, 0, iconSize, iconSize, icon.pixmap(iconSize, iconSize));
-
 	QStringList splitted = divideText(&fontMetrics, this->name, width - paddingLeftRight * 2);
 	drawLine(&painter, &fontMetrics, height - doubleHeight, splitted.at(0), splitted.at(1));
+
+
+//	painter.drawRect(0, 0, width - 1, height - 1);
+
+//	painter.drawLine(QPointF(0, 10.4), QPointF(width, 10.4));
 }

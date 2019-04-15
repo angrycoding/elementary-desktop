@@ -7,6 +7,7 @@
 #include <QDrag>
 #include <QProcess>
 #include <QFileIconProvider>
+#include <QThread>
 #include "desktopicon.h"
 
 class MainWindow : public QMainWindow {
@@ -20,6 +21,8 @@ private:
 	bool isShiftPressed(QMouseEvent *event);
 	QPoint pressPoint;
 	QPixmap dragPixmap;
+	QPoint clientToGrid(QPoint pos);
+	QPoint gridToClient(QPoint pos);
 
 
 public:
@@ -29,6 +32,9 @@ public:
 	~MainWindow();
 	void setAllIconsSelection(bool selected);
 	void selectIcon(DesktopIcon* icon);
+	void recalcGrid();
+	void realignIcons();
+
 
 
 protected:
@@ -47,6 +53,14 @@ protected:
 	void dragEnterEvent(QDragEnterEvent *event);
 	void dragMoveEvent(QDragMoveEvent *event);
 
+
+	// QWidget interface
+protected:
+	void paintEvent(QPaintEvent *event);
+
+	// QWidget interface
+protected:
+	void resizeEvent(QResizeEvent *event);
 };
 
 #endif // MAINWINDOW_H

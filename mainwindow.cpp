@@ -14,17 +14,56 @@
 #include <QCursor>
 #include <QHash>
 #include <QDateTime>
+#include <QObject>
+#include <QPropertyAnimation>
 
 
-int iconSizeX = 110;
 QHash<QString, DesktopIcon*> newList;
 
 
-int rangedRand(unsigned int min, unsigned int max){
-	return (qrand() % (max+1-min)) + min;
+
+//int desiredCols = 19;
+//int desiredRows = 11;
+
+int desiredCols = 14;
+int desiredRows = 8;
+
+int desiredSpacing = 12;
+
+int OFFSET_X = 0;
+int OFFSET_Y = 0;
+
+int W_WIDTH = 0;
+int W_HEIGHT = 0;
+
+
+
+void MainWindow::recalcGrid() {
+	int desktopWidth = this->width();
+	int desktopHeight = this->height();
+	int _cols = (desktopWidth - desiredSpacing) / desiredCols;
+	int _rows = (desktopHeight - desiredSpacing) / desiredRows;
+	W_WIDTH = _cols - desiredSpacing;
+	W_HEIGHT = _rows - desiredSpacing;
+	OFFSET_X = ((desktopWidth + desiredSpacing) - _cols * desiredCols) / 2;
+	OFFSET_Y = ((desktopHeight + desiredSpacing) - _rows * desiredRows) / 2;
 }
 
+void MainWindow::realignIcons()
+{
+	foreach (DesktopIcon* icon, newList) {
+		int col = icon->property("col").toInt();
+		int row = icon->property("row").toInt();
+		icon->move(OFFSET_X + (col * desiredSpacing + col * W_WIDTH), OFFSET_Y + (row * desiredSpacing + row * W_HEIGHT));
+
+		icon->resize(W_WIDTH, W_HEIGHT);
+	}
+}
+
+
+
 void MainWindow::updateDesktop(QStringList files) {
+
 
 	foreach (QString path, newList.keys()) {
 		DesktopIcon *desktopIcon = newList[path];
@@ -34,27 +73,43 @@ void MainWindow::updateDesktop(QStringList files) {
 		}
 	}
 
+
+	int col = 0;
+	int row = 0;
+
 	foreach (QString path, files) {
 		if (newList.contains(path)) continue;
-
-		int x = rangedRand(50, 1000);
-		int y = rangedRand(50, 700);
 
 		DesktopIcon *button = new DesktopIcon(this);
 		button->setFont(this->font());
 		button->setPath(path);
 		button->setIcon(iconProvider.icon(QFileInfo(path)));
-
-		qDebug() << path << QFileInfo(path).birthTime() << QFileInfo(path).size() << QFileInfo(path);
-
 		button->setParent(this);
 
-		button->resize(iconSizeX, iconSizeX);
-		button->move(x, y);
+//		button->resize(W_WIDTH, W_HEIGHT);
+//		button->move(col * W_HEIGHT, row * W_HEIGHT);
+
+
+
 		button->show();
 
+		button->setProperty("col", col);
+		button->setProperty("row", row);
+
 		newList.insert(path, button);
+
+
+		row++;
+		if (row >= desiredRows) {
+			row = 0;
+			col++;
+		}
+
 	}
+
+
+	recalcGrid();
+	realignIcons();
 
 
 }
@@ -84,7 +139,26 @@ bool MainWindow::isShiftPressed(QMouseEvent *event) {
 	return (
 		modifiers.testFlag(Qt::ShiftModifier) ||
 		modifiers.testFlag(Qt::ControlModifier)
-	);
+				);
+}
+
+QPoint MainWindow::gridToClient(QPoint pos) {
+	int gridX = pos.x();
+	int gridY = pos.y();
+	return QPoint(OFFSET_X + (gridX * desiredSpacing + gridX * W_WIDTH), OFFSET_Y + (gridY * desiredSpacing + gridY * W_HEIGHT));
+}
+
+QPoint MainWindow::clientToGrid(QPoint pos) {
+	int gridX = (pos.x() - OFFSET_X + desiredSpacing / 2) / (W_WIDTH + desiredSpacing);
+	int gridY = (pos.y() - OFFSET_Y + desiredSpacing / 2) / (W_HEIGHT + desiredSpacing);
+
+	gridX = qMax(gridX, 0);
+	gridX = qMin(gridX, desiredCols - 1);
+
+	gridY = qMax(gridY, 0);
+	gridY = qMin(gridY, desiredRows - 1);
+
+	return QPoint(gridX, gridY);
 }
 
 void MainWindow::mousePressEvent(QMouseEvent *event) {
@@ -145,8 +219,15 @@ void MainWindow::mousePressEvent(QMouseEvent *event) {
 void MainWindow::mouseMoveEvent(QMouseEvent *event) {
 
 	if (rubberBand->isVisible()) {
+
 		QRect selectionArea = QRect(pressPoint, event->pos());
-		rubberBand->setGeometry(selectionArea.normalized());
+		selectionArea = selectionArea.normalized();
+		selectionArea.setLeft(qMax(selectionArea.left(), -1));
+		selectionArea.setTop(qMax(selectionArea.top(), -1));
+		selectionArea.setRight(qMin(selectionArea.right(), this->width() - 1));
+		selectionArea.setBottom(qMin(selectionArea.bottom(), this->height() - 1));
+		rubberBand->setGeometry(selectionArea);
+
 		foreach (DesktopIcon* desktopIcon, newList) {
 			bool savedState = desktopIcon->property("selected").toBool();
 			if (selectionArea.intersects(desktopIcon->geometry())) {
@@ -154,6 +235,8 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event) {
 			}
 			desktopIcon->setSelected(savedState);
 		}
+
+
 	}
 
 	else {
@@ -224,14 +307,18 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
 
 void MainWindow::dropEvent(QDropEvent *event) {
 
-
 	event->acceptProposedAction();
 
 	foreach (DesktopIcon* desktopIcon, newList) {
 		if (!desktopIcon->isSelected()) continue;
-		qDebug() << "HERE???" << event->pos();
-		desktopIcon->move(event->pos() - pressPoint);
-//		urls.push_back(desktopIcon->getPath());
+
+		QPoint gridPos = clientToGrid(event->pos());
+
+		desktopIcon->setProperty("col", gridPos.x());
+		desktopIcon->setProperty("row", gridPos.y());
+
+		QPoint clientPos = gridToClient(gridPos);
+		desktopIcon->move(clientPos);
 
 	}
 
@@ -256,9 +343,47 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
 }
 
 void MainWindow::dragMoveEvent(QDragMoveEvent *event) {
-	qDebug() << event->pos();
+//	qDebug() << event->pos();
 
 //	event->setDropAction(Qt::IgnoreAction);
 //	event->acceptProposedAction();
 	//	event->set
+}
+
+
+
+
+
+void MainWindow::paintEvent(QPaintEvent *event)
+{
+
+	QPainter painter(this);
+
+	recalcGrid();
+
+
+
+
+	painter.drawRect(OFFSET_X, OFFSET_Y, this->width() - OFFSET_X * 2, this->height() - OFFSET_Y * 2);
+
+
+	for (int col = 1; col < desiredCols; col++) {
+		painter.drawLine(OFFSET_X + (col * desiredSpacing + col * W_WIDTH), OFFSET_Y, OFFSET_X + (col * desiredSpacing + col * W_WIDTH), this->height() - OFFSET_Y);
+		painter.drawLine(OFFSET_X + (col * desiredSpacing - desiredSpacing + col * W_WIDTH), OFFSET_Y, OFFSET_X + (col * desiredSpacing - desiredSpacing + col * W_WIDTH), this->height() - OFFSET_Y);
+	}
+
+	for (int row = 1; row < desiredRows; row++) {
+		painter.drawLine(OFFSET_X, OFFSET_Y + (row * desiredSpacing + row * W_HEIGHT), this->width() - OFFSET_X, OFFSET_Y + (row * desiredSpacing + row * W_HEIGHT));
+		painter.drawLine(OFFSET_X, OFFSET_Y + (row * desiredSpacing - desiredSpacing + row * W_HEIGHT), this->width() - OFFSET_X, OFFSET_Y + (row * desiredSpacing - desiredSpacing + row * W_HEIGHT));
+	}
+
+
+}
+
+
+
+
+void MainWindow::resizeEvent(QResizeEvent *event) {
+	recalcGrid();
+	realignIcons();
 }

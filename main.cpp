@@ -71,7 +71,6 @@ int main(int argc, char *argv[]) {
 
 
 
-	updateDesktop(&window);
 	window.setStyleSheet("background-color: #5979AE" );
 
 	if (isMac()) {
@@ -85,6 +84,7 @@ int main(int argc, char *argv[]) {
 		window.setGeometry(QApplication::desktop()->geometry());
 	}
 
+	updateDesktop(&window);
 	window.show();
 
 	return application.exec();
