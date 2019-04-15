@@ -16,13 +16,13 @@ class MainWindow : public QMainWindow {
 
 private:
 
-	QRubberBand* rubberBand;
-	QFileIconProvider iconProvider;
-	bool isShiftPressed(QMouseEvent *event);
 	QPoint pressPoint;
 	QPixmap dragPixmap;
+	QRubberBand* rubberBand;
+	QFileIconProvider iconProvider;
 	QPoint clientToGrid(QPoint pos);
 	QPoint gridToClient(QPoint pos);
+	bool isShiftPressed(QMouseEvent *event);
 
 
 public:
@@ -35,32 +35,22 @@ public:
 	void recalcGrid();
 	void realignIcons();
 
+public:
 
+	bool event(QEvent *event);
 
 protected:
 
 	void mousePressEvent(QMouseEvent *event);
 	void mouseReleaseEvent(QMouseEvent *event);
 	void mouseMoveEvent(QMouseEvent *event);
-
-public:
-
-	bool event(QEvent *event);
-
-protected:
 	void keyPressEvent(QKeyEvent *event);
 	void dropEvent(QDropEvent *event);
 	void dragEnterEvent(QDragEnterEvent *event);
 	void dragMoveEvent(QDragMoveEvent *event);
-
-
-	// QWidget interface
-protected:
 	void paintEvent(QPaintEvent *event);
-
-	// QWidget interface
-protected:
 	void resizeEvent(QResizeEvent *event);
+
 };
 
 #endif // MAINWINDOW_H

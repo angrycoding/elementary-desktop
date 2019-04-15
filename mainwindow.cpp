@@ -20,19 +20,11 @@
 
 QHash<QString, DesktopIcon*> newList;
 
-
-
-//int desiredCols = 19;
-//int desiredRows = 11;
-
 int desiredCols = 14;
 int desiredRows = 8;
-
 int desiredSpacing = 12;
-
 int OFFSET_X = 0;
 int OFFSET_Y = 0;
-
 int W_WIDTH = 0;
 int W_HEIGHT = 0;
 
@@ -49,8 +41,7 @@ void MainWindow::recalcGrid() {
 	OFFSET_Y = ((desktopHeight + desiredSpacing) - _rows * desiredRows) / 2;
 }
 
-void MainWindow::realignIcons()
-{
+void MainWindow::realignIcons() {
 	foreach (DesktopIcon* icon, newList) {
 		int col = icon->property("col").toInt();
 		int row = icon->property("row").toInt();
@@ -85,19 +76,10 @@ void MainWindow::updateDesktop(QStringList files) {
 		button->setPath(path);
 		button->setIcon(iconProvider.icon(QFileInfo(path)));
 		button->setParent(this);
-
-//		button->resize(W_WIDTH, W_HEIGHT);
-//		button->move(col * W_HEIGHT, row * W_HEIGHT);
-
-
-
-		button->show();
-
 		button->setProperty("col", col);
 		button->setProperty("row", row);
-
+		button->show();
 		newList.insert(path, button);
-
 
 		row++;
 		if (row >= desiredRows) {
@@ -107,11 +89,8 @@ void MainWindow::updateDesktop(QStringList files) {
 
 	}
 
-
 	recalcGrid();
 	realignIcons();
-
-
 }
 
 MainWindow::MainWindow(QWidget *parent): QMainWindow(parent) {
@@ -354,14 +333,9 @@ void MainWindow::dragMoveEvent(QDragMoveEvent *event) {
 
 
 
-void MainWindow::paintEvent(QPaintEvent *event)
-{
-
+void MainWindow::paintEvent(QPaintEvent *event) {
 	QPainter painter(this);
-
-	recalcGrid();
-
-
+	painter.setPen(QPen(QColor("#000000"), 0.4, Qt::DotLine));
 
 
 	painter.drawRect(OFFSET_X, OFFSET_Y, this->width() - OFFSET_X * 2, this->height() - OFFSET_Y * 2);
