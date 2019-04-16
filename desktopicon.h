@@ -27,11 +27,11 @@ private:
 	QString name;
 	bool active = false;
 	bool selected = false;
+	bool isDir = false;
 
 	QColor bgColor = QColor("transparent");
 	QColor activeSelectionBgColor = QColor("#3067D2");
 	QColor inactiveSelectionBgColor = QColor("#D0D0D0");
-
 	QColor textColor = QColor("#FFFFFF");
 	QColor activeSelectionTextColor = QColor("#FFFFFF");
 	QColor inactiveSelectionTextColor = QColor("#6C6C6C");
@@ -50,6 +50,7 @@ public:
 	void setSelected(bool selected);
 	void setActive(bool active);
 	bool isSelected();
+	bool isDirectory();
 
 protected:
 

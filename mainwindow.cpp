@@ -19,34 +19,26 @@
 
 QHash<QString, DesktopIcon*> newList;
 
-int desiredCols = 12;
-int desiredRows = 7;
-int desiredSpacing = 10;
-int OFFSET_X = 0;
-int OFFSET_Y = 0;
-int W_WIDTH = 0;
-int W_HEIGHT = 0;
-
-
-
 void MainWindow::recalcGrid() {
-	int desktopWidth = this->width();
-	int desktopHeight = this->height();
-	int _cols = (desktopWidth - desiredSpacing) / desiredCols;
-	int _rows = (desktopHeight - desiredSpacing) / desiredRows;
-	W_WIDTH = _cols - desiredSpacing;
-	W_HEIGHT = _rows - desiredSpacing;
-	OFFSET_X = ((desktopWidth + desiredSpacing) - _cols * desiredCols) / 2;
-	OFFSET_Y = ((desktopHeight + desiredSpacing) - _rows * desiredRows) / 2;
+	qreal width = this->width();
+	qreal height = this->height();
+	qreal _cols = (width - gridSpacing) / gridWidth;
+	qreal _rows = (height - gridSpacing) / gridHeight;
+	desktopIconWidth = _cols - gridSpacing;
+	desktopIconHeight = _rows - gridSpacing;
+	offsetX = ((width + gridSpacing) - _cols * gridWidth) / 2;
+	offsetY = ((height + gridSpacing) - _rows * gridHeight) / 2;
+	realignIcons();
 }
 
 void MainWindow::realignIcons() {
 	foreach (DesktopIcon* icon, newList) {
+
 		int col = icon->property("col").toInt();
 		int row = icon->property("row").toInt();
-		icon->move(OFFSET_X + (col * desiredSpacing + col * W_WIDTH), OFFSET_Y + (row * desiredSpacing + row * W_HEIGHT));
 
-		icon->resize(W_WIDTH, W_HEIGHT);
+		icon->move(offsetX + (col * gridSpacing + col * desktopIconWidth), offsetY + (row * gridSpacing + row * desktopIconHeight));
+		icon->resize(desktopIconWidth, desktopIconHeight);
 	}
 }
 
@@ -81,14 +73,13 @@ void MainWindow::updateDesktop(QStringList files) {
 		newList.insert(path, button);
 
 		row++;
-		if (row >= desiredRows) {
+		if (row >= gridHeight) {
 			row = 0;
 			col++;
 		}
 
 	}
 
-	recalcGrid();
 	realignIcons();
 }
 
@@ -100,10 +91,18 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent) {
 	this->setFont(font);
 	dragPixmap = QPixmap(1, 1);
 	rubberBand = new QRubberBand(QRubberBand::Rectangle, this);
+	recalcGrid();
 }
 
 MainWindow::~MainWindow() {
 	delete this->rubberBand;
+}
+
+void MainWindow::setGrid(int width, int height, int spacing) {
+	gridWidth = width;
+	gridHeight = height;
+	gridSpacing = spacing;
+	recalcGrid();
 }
 
 void MainWindow::setAllIconsSelection(bool selected) {
@@ -123,18 +122,18 @@ bool MainWindow::isShiftPressed(QMouseEvent *event) {
 QPoint MainWindow::gridToClient(QPoint pos) {
 	int gridX = pos.x();
 	int gridY = pos.y();
-	return QPoint(OFFSET_X + (gridX * desiredSpacing + gridX * W_WIDTH), OFFSET_Y + (gridY * desiredSpacing + gridY * W_HEIGHT));
+	return QPoint(offsetX + (gridX * gridSpacing + gridX * desktopIconWidth), offsetY + (gridY * gridSpacing + gridY * desktopIconHeight));
 }
 
 QPoint MainWindow::clientToGrid(QPoint pos) {
-	int gridX = (pos.x() - OFFSET_X + desiredSpacing / 2) / (W_WIDTH + desiredSpacing);
-	int gridY = (pos.y() - OFFSET_Y + desiredSpacing / 2) / (W_HEIGHT + desiredSpacing);
+	int gridX = (pos.x() - offsetX + gridSpacing / 2) / (desktopIconWidth + gridSpacing);
+	int gridY = (pos.y() - offsetY + gridSpacing / 2) / (desktopIconHeight + gridSpacing);
 
 	gridX = qMax(gridX, 0);
-	gridX = qMin(gridX, desiredCols - 1);
+	gridX = qMin(gridX, gridWidth - 1);
 
 	gridY = qMax(gridY, 0);
-	gridY = qMin(gridY, desiredRows - 1);
+	gridY = qMin(gridY, gridHeight - 1);
 
 	return QPoint(gridX, gridY);
 }
@@ -296,7 +295,7 @@ void MainWindow::dropEvent(QDropEvent *event) {
 		desktopIcon->setProperty("row", gridPos.y());
 
 		QPoint clientPos = gridToClient(gridPos);
-		desktopIcon->move(clientPos);
+		desktopIcon->move(clientPos.x(), clientPos.y());
 
 	}
 
@@ -321,11 +320,35 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
 }
 
 void MainWindow::dragMoveEvent(QDragMoveEvent *event) {
-//	qDebug() << event->pos();
 
-//	event->setDropAction(Qt::IgnoreAction);
-//	event->acceptProposedAction();
-	//	event->set
+	event->acceptProposedAction();
+
+
+	QPoint pos = event->pos();
+	QPoint grid = clientToGrid(pos);
+
+	foreach (DesktopIcon* icon, newList) {
+		int col = icon->property("col").toInt();
+		int row = icon->property("row").toInt();
+		if (col == grid.x() && row == grid.y()) {
+
+			if (icon->isDirectory()) {
+				icon->setSelected(true);
+			}
+
+			else {
+				event->setDropAction(Qt::IgnoreAction);
+			}
+
+
+
+
+
+			return;
+		}
+	}
+
+	event->setDropAction(Qt::MoveAction);
 }
 
 
@@ -337,17 +360,17 @@ void MainWindow::paintEvent(QPaintEvent *event) {
 	painter.setPen(QPen(QColor("#FF0000"), 0.4, Qt::DotLine));
 
 
-	painter.drawRect(OFFSET_X, OFFSET_Y, this->width() - OFFSET_X * 2, this->height() - OFFSET_Y * 2);
+	painter.drawRect(offsetX, offsetY, this->width() - offsetX * 2, this->height() - offsetY * 2);
 
 
-	for (int col = 1; col < desiredCols; col++) {
-		painter.drawLine(OFFSET_X + (col * desiredSpacing + col * W_WIDTH), OFFSET_Y, OFFSET_X + (col * desiredSpacing + col * W_WIDTH), this->height() - OFFSET_Y);
-		painter.drawLine(OFFSET_X + (col * desiredSpacing - desiredSpacing + col * W_WIDTH), OFFSET_Y, OFFSET_X + (col * desiredSpacing - desiredSpacing + col * W_WIDTH), this->height() - OFFSET_Y);
+	for (int col = 1; col < gridWidth; col++) {
+		painter.drawLine(offsetX + (col * gridSpacing + col * desktopIconWidth), offsetY, offsetX + (col * gridSpacing + col * desktopIconWidth), this->height() - offsetY);
+		painter.drawLine(offsetX + (col * gridSpacing - gridSpacing + col * desktopIconWidth), offsetY, offsetX + (col * gridSpacing - gridSpacing + col * desktopIconWidth), this->height() - offsetY);
 	}
 
-	for (int row = 1; row < desiredRows; row++) {
-		painter.drawLine(OFFSET_X, OFFSET_Y + (row * desiredSpacing + row * W_HEIGHT), this->width() - OFFSET_X, OFFSET_Y + (row * desiredSpacing + row * W_HEIGHT));
-		painter.drawLine(OFFSET_X, OFFSET_Y + (row * desiredSpacing - desiredSpacing + row * W_HEIGHT), this->width() - OFFSET_X, OFFSET_Y + (row * desiredSpacing - desiredSpacing + row * W_HEIGHT));
+	for (int row = 1; row < gridHeight; row++) {
+		painter.drawLine(offsetX, offsetY + (row * gridSpacing + row * desktopIconHeight), this->width() - offsetX, offsetY + (row * gridSpacing + row * desktopIconHeight));
+		painter.drawLine(offsetX, offsetY + (row * gridSpacing - gridSpacing + row * desktopIconHeight), this->width() - offsetX, offsetY + (row * gridSpacing - gridSpacing + row * desktopIconHeight));
 	}
 
 
@@ -358,5 +381,4 @@ void MainWindow::paintEvent(QPaintEvent *event) {
 
 void MainWindow::resizeEvent(QResizeEvent *event) {
 	recalcGrid();
-	realignIcons();
 }

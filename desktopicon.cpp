@@ -2,12 +2,17 @@
 #include <QPainter>
 #include <QIcon>
 #include <QFileInfo>
+#include <QDebug>
+
+int getTextWidth(QFontMetrics* fontMetrics, QString text) {
+	return fontMetrics->size(Qt::TextSingleLine, text).width();
+}
 
 QString splitText(QFontMetrics* fontMetrics, QString secondLine, int maxWidth) {
 	QString result = "";
 	for (int c = 0; c < secondLine.length(); c++) {
 		QChar ch = secondLine.at(c);
-		if (fontMetrics->width(result + ch) > maxWidth) break;
+		if (getTextWidth(fontMetrics, result + ch) > maxWidth) break;
 		result += ch;
 	}
 	return result;
@@ -17,11 +22,11 @@ QStringList divideText(QFontMetrics* fontMetrics, QString text, int maxWidth) {
 	QString firstLine = splitText(fontMetrics, text, maxWidth);
 	QString secondLine = text.mid(firstLine.length());
 	if (secondLine.length()) {
-		int firstLineWidth = fontMetrics->width(firstLine);
-		int secondLineWidth = fontMetrics->width(secondLine);
+		int firstLineWidth = getTextWidth(fontMetrics, firstLine);
+		int secondLineWidth = getTextWidth(fontMetrics, secondLine);
 		if (secondLineWidth > firstLineWidth) {
 			QString xStr = "…" + secondLine.right(6);
-			int xWidth = fontMetrics->width(xStr);
+			int xWidth = getTextWidth(fontMetrics, xStr);
 			secondLine = splitText(fontMetrics, secondLine.mid(0, -6), firstLineWidth - xWidth) + xStr;
 		}
 	}
@@ -56,13 +61,19 @@ void DesktopIcon::setIcon(const QIcon &icon) {
 }
 
 void DesktopIcon::setPath(QString path) {
+	QFileInfo fileInfo(path);
 	this->path = path;
-	this->name = QFileInfo(path).fileName();
+	this->name = fileInfo.fileName();
+	this->isDir = fileInfo.isDir();
 	this->update();
 }
 
 QString DesktopIcon::getPath() {
 	return this->path;
+}
+
+bool DesktopIcon::isDirectory() {
+	return this->isDir;
 }
 
 QPainterPath DesktopIcon::buildRoundedRectPath(QRect rect, uint8_t border) {
@@ -128,8 +139,8 @@ void DesktopIcon::drawLine(QPainter *painter, QFontMetrics *fontMetrics, int y, 
 		textColor
 	);
 
-	QRect text1Rect = fontMetrics->boundingRect(text);
-	QRect text2Rect = fontMetrics->boundingRect(text2);
+	QSize text1Rect = fontMetrics->size(Qt::TextSingleLine, text);
+	QSize text2Rect = fontMetrics->size(Qt::TextSingleLine, text2);
 
 	int text1Width = text1Rect.width();
 	int text2Width = text2Rect.width();
@@ -162,8 +173,10 @@ void DesktopIcon::paintEvent(QPaintEvent *event) {
 	painter.setFont(this->font());
 	painter.setRenderHints(QPainter::HighQualityAntialiasing | QPainter::TextAntialiasing, true);
 	QFontMetrics fontMetrics = painter.fontMetrics();
+
 	int width = this->width();
 	int height = this->height();
+
 	int doubleHeight = fontMetrics.height() * 2 + paddingTopBottom * 3;
 	int iconSize = qMin(width, height - doubleHeight - iconTextGap);
 	painter.drawPixmap((width - iconSize) / 2, 0, iconSize, iconSize, icon.pixmap(iconSize, iconSize));

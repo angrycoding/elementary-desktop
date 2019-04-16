@@ -16,6 +16,15 @@ class MainWindow : public QMainWindow {
 
 private:
 
+	int offsetX;
+	int offsetY;
+	int desktopIconWidth;
+	int desktopIconHeight;
+
+	int gridWidth = 5;
+	int gridHeight = 5;
+	int gridSpacing = 10;
+
 	QPoint pressPoint;
 	QPixmap dragPixmap;
 	QRubberBand* rubberBand;
@@ -23,17 +32,18 @@ private:
 	QPoint clientToGrid(QPoint pos);
 	QPoint gridToClient(QPoint pos);
 	bool isShiftPressed(QMouseEvent *event);
+	void recalcGrid();
+	void realignIcons();
+	void setAllIconsSelection(bool selected);
+	void selectIcon(DesktopIcon* icon);
 
 
 public:
 
-	void updateDesktop(QStringList files);
 	MainWindow(QWidget *parent = 0);
 	~MainWindow();
-	void setAllIconsSelection(bool selected);
-	void selectIcon(DesktopIcon* icon);
-	void recalcGrid();
-	void realignIcons();
+	void updateDesktop(QStringList files);
+	void setGrid(int width, int height, int spacing);
 
 public:
 

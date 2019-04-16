@@ -53,6 +53,7 @@ static void updateDesktop(MainWindow *window) {
 int main(int argc, char *argv[]) {
 	QApplication application(argc, argv);
 	MainWindow window;
+	window.setGrid(12, 7, 10);
 
 
 //	setupHandlers(&application);
