@@ -25,15 +25,11 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += c++11
 
 SOURCES += \
-    QINotify/QINotify.cpp \
-    QINotify/QINotifyFileSystemWatcher.cpp \
     desktopicon.cpp \
     main.cpp \
     mainwindow.cpp
 
 HEADERS += \
-    QINotify/QINotify.h \
-    QINotify/QINotifyFileSystemWatcher.h \
         mainwindow.h \
     desktopicon.h \
     mainwindow.h

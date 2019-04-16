@@ -6,7 +6,6 @@
 #include <QDesktopWidget>
 #include <QFileSystemWatcher>
 #include <QStandardPaths>
-#include "QINotify/QINotifyFileSystemWatcher.h"
 
 QProcess process;
 QString DESKTOP_DIR_PATH = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
@@ -88,43 +87,6 @@ int main(int argc, char *argv[]) {
 	updateDesktop(&window);
 	window.show();
 
-
-
-	QINotifyFileSystemWatcher watcher2;
-
-	QObject::connect(&watcher2, &QINotifyFileSystemWatcher::rootPathRemoved, [](const QString& rootPath) {
-		qDebug() << "Root path removed " << rootPath;
-	});
-
-	QObject::connect(&watcher2, &QINotifyFileSystemWatcher::fileAdded, [](const QString& parent, const QString& name) {
-		qDebug() << parent << " file added " << name;
-	});
-
-	QObject::connect(&watcher2, &QINotifyFileSystemWatcher::fileRemoved, [](const QString& parent, const QString& name) {
-		qDebug() << parent << " file remove " << name;
-	});
-
-	QObject::connect(&watcher2, &QINotifyFileSystemWatcher::fileModified, [](const QString& parent, const QString& name) {
-		qDebug() << parent << " file changed " << name;
-	});
-
-	QObject::connect(&watcher2, &QINotifyFileSystemWatcher::fileMoved, [](const QString& parentFrom, const QString& fromName, const QString& parentTo, const QString& toName) {
-		qDebug() << parentFrom << "file" << fromName << "move to" << parentTo << " " << toName;
-	});
-
-	QObject::connect(&watcher2, &QINotifyFileSystemWatcher::directoryAdded, [](const QString& parent, const QString& name) {
-		qDebug() << parent << " directory added " << name;
-	});
-
-	QObject::connect(&watcher2, &QINotifyFileSystemWatcher::directoryRemoved, [](const QString& parent, const QString& name) {
-		qDebug() << parent << " directory remove " << name;
-	});
-
-	QObject::connect(&watcher2, &QINotifyFileSystemWatcher::directoryMoved, [&watcher](const QString& parentFrom, const QString& fromName, const QString& parentTo, const QString& toName) {
-		qDebug() << parentFrom << "directory" << fromName << "move to" << parentTo << " " << toName;
-	});
-
-   watcher2.setRootPath(DESKTOP_DIR_PATH, false);
 
 
 	return application.exec();
