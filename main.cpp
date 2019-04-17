@@ -4,8 +4,9 @@
 #include <QtDebug>
 #include <QDir>
 #include <QDesktopWidget>
-#include <QFileSystemWatcher>
 #include <QStandardPaths>
+#include <QPropertyAnimation>
+#include "fswatcher.h"
 
 QProcess process;
 QString DESKTOP_DIR_PATH = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
@@ -43,32 +44,17 @@ static void setupHandlers(QApplication *application) {
 }
 
 
-static void updateDesktop(MainWindow *window) {
-	QStringList files;
-	auto list = QDir(DESKTOP_DIR_PATH).entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries);
-	foreach (QFileInfo info, list) files.push_front(info.absoluteFilePath());
-	window->updateDesktop(files);
-}
+//static void updateDesktop(MainWindow *window) {
+//	QStringList files;
+//	auto list = QDir(DESKTOP_DIR_PATH).entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries);
+//	foreach (QFileInfo info, list) files.push_front(info.absoluteFilePath());
+//	window->updateDesktop(files);
+//}
 
 int main(int argc, char *argv[]) {
 	QApplication application(argc, argv);
 	MainWindow window;
 	window.setGrid(12, 7, 10);
-
-
-//	setupHandlers(&application);
-
-	QFileSystemWatcher watcher;
-	watcher.addPath(DESKTOP_DIR_PATH);
-
-	QObject::connect(&watcher, &QFileSystemWatcher::directoryChanged, [&window](){
-		updateDesktop(&window);
-	});
-
-//	QObject::connect(&watcher, &QFileSystemWatcher::fileChanged, [&window](){
-//		qDebug() << "CHANGED?";
-//		updateDesktop(&window);
-//	});
 
 
 
@@ -85,7 +71,16 @@ int main(int argc, char *argv[]) {
 		window.setGeometry(QApplication::desktop()->availableGeometry());
 	}
 
-	updateDesktop(&window);
+
+
+	FSWatcher(DESKTOP_DIR_PATH, [&window](QMap<unsigned long, QFileInfo> files) {
+		QStringList files2;
+		foreach (QFileInfo info, files) files2.push_front(info.absoluteFilePath());
+		window.updateDesktop(files2);
+	});
+
+
+//	updateDesktop(&window);
 	window.show();
 
 

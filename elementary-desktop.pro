@@ -26,10 +26,12 @@ CONFIG += c++11
 
 SOURCES += \
     desktopicon.cpp \
+    fswatcher.cpp \
     main.cpp \
     mainwindow.cpp
 
 HEADERS += \
+    fswatcher.h \
         mainwindow.h \
     desktopicon.h \
     mainwindow.h

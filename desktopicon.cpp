@@ -110,7 +110,13 @@ QPainterPath DesktopIcon::buildRoundedRectPath(QRect rect, uint8_t border) {
 
 	if (border & BOTTOM_INSET) {
 		path.cubicTo(right, bottom - borderRadius, right, bottom, right - borderRadius, bottom);
-	} else {
+	}
+
+	else if (border & BOTTOM_OUTSET) {
+		path.cubicTo(right, bottom - borderRadius, right, bottom, right + borderRadius, bottom);
+	}
+
+	else {
 		path.lineTo(right, bottom);
 	}
 
@@ -118,7 +124,14 @@ QPainterPath DesktopIcon::buildRoundedRectPath(QRect rect, uint8_t border) {
 
 	if (border & BOTTOM_INSET) {
 		path.cubicTo(left + borderRadius, bottom, left, bottom, left, bottom - borderRadius);
-	} else {
+	}
+
+	else if (border & BOTTOM_OUTSET) {
+		path.lineTo(left - borderRadius, bottom);
+		path.cubicTo(left - borderRadius, bottom, left, bottom, left, bottom - borderRadius);
+	}
+
+	else {
 		path.lineTo(left, bottom);
 	}
 

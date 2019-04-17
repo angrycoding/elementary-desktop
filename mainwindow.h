@@ -61,6 +61,10 @@ protected:
 	void paintEvent(QPaintEvent *event);
 	void resizeEvent(QResizeEvent *event);
 
+
+	// QWidget interface
+	protected:
+	void wheelEvent(QWheelEvent *event);
 };
 
 #endif // MAINWINDOW_H

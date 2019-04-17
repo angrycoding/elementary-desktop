@@ -15,6 +15,7 @@
 #include <QHash>
 #include <QDateTime>
 #include <QObject>
+#include <QPropertyAnimation>
 
 
 QHash<QString, DesktopIcon*> newList;
@@ -92,6 +93,7 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent) {
 	dragPixmap = QPixmap(1, 1);
 	rubberBand = new QRubberBand(QRubberBand::Rectangle, this);
 	recalcGrid();
+	grabGesture(Qt::SwipeGesture);
 }
 
 MainWindow::~MainWindow() {
@@ -139,6 +141,7 @@ QPoint MainWindow::clientToGrid(QPoint pos) {
 }
 
 void MainWindow::mousePressEvent(QMouseEvent *event) {
+
 
 	DesktopIcon* desktopIcon = dynamic_cast<DesktopIcon*>(this->childAt(event->pos()));
 
@@ -273,6 +276,9 @@ bool MainWindow::event(QEvent *event) {
 			desktopIcon->setActive(event->type() == QEvent::WindowActivate);
 		}
 	}
+	else  if (event->type() == QEvent::Gesture) {
+		qDebug() << "OOOOK";
+	}
 	return QWidget::event(event);
 }
 
@@ -280,6 +286,14 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
 	if (event->matches(QKeySequence::SelectAll)) {
 		setAllIconsSelection(true);
 	}
+
+	else if (event->matches(QKeySequence::MoveToNextChar)) {
+	}
+
+	else if (event->matches(QKeySequence::MoveToPreviousChar)) {
+
+	}
+
 }
 
 void MainWindow::dropEvent(QDropEvent *event) {
@@ -381,4 +395,23 @@ void MainWindow::paintEvent(QPaintEvent *event) {
 
 void MainWindow::resizeEvent(QResizeEvent *event) {
 	recalcGrid();
+}
+
+void MainWindow::wheelEvent(QWheelEvent *event)
+{
+//	qDebug() << event;
+//	if (event->delta() > 0) {
+//		QPropertyAnimation *animation = new QPropertyAnimation(this, "pos");
+//		animation->setDuration(250);
+//		animation->setStartValue(QPoint(this->pos().x(), this->pos().y()));
+//		animation->setEndValue(QPoint(-950, this->pos().y()));
+//		animation->start();
+//	} else {
+//		QPropertyAnimation *animation = new QPropertyAnimation(this, "pos");
+//		animation->setDuration(250);
+//		animation->setStartValue(QPoint(this->pos().x(), this->pos().y()));
+//		animation->setEndValue(QPoint(0, this->pos().y()));
+//		animation->start();
+
+//	}
 }
