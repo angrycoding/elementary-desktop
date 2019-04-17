@@ -73,7 +73,9 @@ int main(int argc, char *argv[]) {
 
 
 
-	FSWatcher(DESKTOP_DIR_PATH, [&window](QMap<unsigned long, QFileInfo> files) {
+	FSWatcher fsWatcher(DESKTOP_DIR_PATH, [&window](QMap<unsigned long, QFileInfo> files) {
+
+		qDebug() << "HERE????";
 		QStringList files2;
 		foreach (QFileInfo info, files) files2.push_front(info.absoluteFilePath());
 		window.updateDesktop(files2);
