@@ -25,8 +25,7 @@ private:
 	int gridHeight = 5;
 	int gridSpacing = 10;
 
-	QPoint pressPoint;
-	QPixmap dragPixmap;
+	DesktopIcon* unselectOnRelease;
 	QRubberBand* rubberBand;
 	QFileIconProvider iconProvider;
 	QPoint clientToGrid(QPoint pos);
@@ -36,6 +35,7 @@ private:
 	void realignIcons();
 	void setAllIconsSelection(bool selected);
 	void selectIcon(DesktopIcon* icon);
+
 
 
 public:
@@ -61,10 +61,6 @@ protected:
 	void paintEvent(QPaintEvent *event);
 	void resizeEvent(QResizeEvent *event);
 
-
-	// QWidget interface
-	protected:
-	void wheelEvent(QWheelEvent *event);
 };
 
 #endif // MAINWINDOW_H

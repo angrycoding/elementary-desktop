@@ -90,10 +90,8 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent) {
 	font.setPixelSize(12);
 	font.setStyleStrategy(QFont::PreferAntialias);
 	this->setFont(font);
-	dragPixmap = QPixmap(1, 1);
 	rubberBand = new QRubberBand(QRubberBand::Rectangle, this);
 	recalcGrid();
-	grabGesture(Qt::SwipeGesture);
 }
 
 MainWindow::~MainWindow() {
@@ -140,17 +138,60 @@ QPoint MainWindow::clientToGrid(QPoint pos) {
 	return QPoint(gridX, gridY);
 }
 
+
+
+
+
 void MainWindow::mousePressEvent(QMouseEvent *event) {
 
-
 	DesktopIcon* desktopIcon = dynamic_cast<DesktopIcon*>(this->childAt(event->pos()));
+	unselectOnRelease = (desktopIcon && desktopIcon->isSelected() ? desktopIcon : nullptr);
 
 	if (!isShiftPressed(event) && (!desktopIcon || !desktopIcon->isSelected())) {
 		setAllIconsSelection(false);
 	}
 
-	if (desktopIcon) {
+	if (!desktopIcon) {
+		rubberBand->setProperty("origin", event->pos());
+		rubberBand->setGeometry(QRect(event->pos(), QSize()));
+		rubberBand->show();
+		foreach (DesktopIcon* desktopIcon, newList) {
+			desktopIcon->setProperty("selected", desktopIcon->isSelected());
+		}
+	} else if (!desktopIcon->isSelected()) {
 		desktopIcon->setSelected(true);
+	}
+}
+
+
+void MainWindow::mouseMoveEvent(QMouseEvent *event) {
+
+
+	if (rubberBand->isVisible()) {
+
+		QRect selectionArea = QRect(rubberBand->property("origin").toPoint(), event->pos());
+
+		selectionArea = selectionArea.normalized();
+		selectionArea.setLeft(qMax(selectionArea.left(), -1));
+		selectionArea.setTop(qMax(selectionArea.top(), -1));
+		selectionArea.setRight(qMin(selectionArea.right(), this->width() - 1));
+		selectionArea.setBottom(qMin(selectionArea.bottom(), this->height() - 1));
+
+		rubberBand->setGeometry(selectionArea);
+
+		foreach (DesktopIcon* desktopIcon, newList) {
+			bool savedState = desktopIcon->property("selected").toBool();
+			if (selectionArea.intersects(desktopIcon->geometry())) {
+				savedState = !savedState;
+			}
+			desktopIcon->setSelected(savedState);
+		}
+
+
+	}
+
+	else {
+
 
 		int minLeft = width();
 		int minTop = height();
@@ -169,57 +210,16 @@ void MainWindow::mousePressEvent(QMouseEvent *event) {
 
 		int pmWidth = maxRight - minLeft + 1;
 		int pmHeight = maxBottom - minTop + 1;
-		dragPixmap = dragPixmap.scaled(pmWidth, pmHeight);
+
+		QPixmap dragPixmap(pmWidth, pmHeight);
 		dragPixmap.fill(QColor("transparent"));
 
 
 		foreach (DesktopIcon* desktopIcon, newList) {
 			if (!desktopIcon->isSelected()) continue;
-			desktopIcon->render(&dragPixmap, QPoint(desktopIcon->x() - minLeft, desktopIcon->y() - minTop), QRegion(), 0);
+			desktopIcon->render(&dragPixmap, QPoint(desktopIcon->x() - minLeft, desktopIcon->y() - minTop), QRegion(), nullptr);
 		}
 
-
-		pressPoint = QPoint(event->x() - minLeft, event->y() - minTop);
-
-	}
-
-
-	else {
-		pressPoint = event->pos();
-		rubberBand->setGeometry(QRect(pressPoint, QSize()));
-		rubberBand->show();
-		foreach (DesktopIcon* desktopIcon, newList) {
-			desktopIcon->setProperty("selected", desktopIcon->isSelected());
-		}
-	}
-
-
-}
-
-void MainWindow::mouseMoveEvent(QMouseEvent *event) {
-
-	if (rubberBand->isVisible()) {
-
-		QRect selectionArea = QRect(pressPoint, event->pos());
-		selectionArea = selectionArea.normalized();
-		selectionArea.setLeft(qMax(selectionArea.left(), -1));
-		selectionArea.setTop(qMax(selectionArea.top(), -1));
-		selectionArea.setRight(qMin(selectionArea.right(), this->width() - 1));
-		selectionArea.setBottom(qMin(selectionArea.bottom(), this->height() - 1));
-		rubberBand->setGeometry(selectionArea);
-
-		foreach (DesktopIcon* desktopIcon, newList) {
-			bool savedState = desktopIcon->property("selected").toBool();
-			if (selectionArea.intersects(desktopIcon->geometry())) {
-				savedState = !savedState;
-			}
-			desktopIcon->setSelected(savedState);
-		}
-
-
-	}
-
-	else {
 
 		QDrag dragger(this);
 
@@ -237,7 +237,7 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event) {
 		mimeData->setUrls(urls);
 		dragger.setMimeData(mimeData);
 		dragger.setPixmap(dragPixmap);
-		dragger.setHotSpot(pressPoint);
+		dragger.setHotSpot(event->pos() - QPoint(minLeft, minTop));
 
 
 //		QPixmap pm = QCursor(Qt::PointingHandCursor).pixmap();
@@ -253,31 +253,24 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event) {
 }
 
 void MainWindow::mouseReleaseEvent(QMouseEvent *event) {
-
 	if (rubberBand->isVisible()) {
-		qDebug() << rubberBand->pos() << rubberBand->size();
 		rubberBand->hide();
+	} else if (unselectOnRelease && isShiftPressed(event)) {
+		unselectOnRelease->setSelected(false);
 	}
-
-//	else if (isShiftPressed(event)) {
-//		DesktopIcon* desktopIcon = dynamic_cast<DesktopIcon*>(this->childAt(event->pos()));
-//		if (desktopIcon && desktopIcon->isSelected()) {
-//			desktopIcon->setSelected(false);
-//		}
-//	}
-
-
-
 }
+
+
+
+
+
+
 
 bool MainWindow::event(QEvent *event) {
 	if (event->type() == QEvent::WindowActivate || event->type() == QEvent::WindowDeactivate) {
 		foreach (DesktopIcon* desktopIcon, newList) {
 			desktopIcon->setActive(event->type() == QEvent::WindowActivate);
 		}
-	}
-	else  if (event->type() == QEvent::Gesture) {
-		qDebug() << "OOOOK";
 	}
 	return QWidget::event(event);
 }
@@ -286,15 +279,10 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
 	if (event->matches(QKeySequence::SelectAll)) {
 		setAllIconsSelection(true);
 	}
-
-	else if (event->matches(QKeySequence::MoveToNextChar)) {
-	}
-
-	else if (event->matches(QKeySequence::MoveToPreviousChar)) {
-
-	}
-
 }
+
+
+
 
 void MainWindow::dropEvent(QDropEvent *event) {
 
@@ -390,28 +378,6 @@ void MainWindow::paintEvent(QPaintEvent *event) {
 
 }
 
-
-
-
 void MainWindow::resizeEvent(QResizeEvent *event) {
 	recalcGrid();
-}
-
-void MainWindow::wheelEvent(QWheelEvent *event)
-{
-//	qDebug() << event;
-//	if (event->delta() > 0) {
-//		QPropertyAnimation *animation = new QPropertyAnimation(this, "pos");
-//		animation->setDuration(250);
-//		animation->setStartValue(QPoint(this->pos().x(), this->pos().y()));
-//		animation->setEndValue(QPoint(-950, this->pos().y()));
-//		animation->start();
-//	} else {
-//		QPropertyAnimation *animation = new QPropertyAnimation(this, "pos");
-//		animation->setDuration(250);
-//		animation->setStartValue(QPoint(this->pos().x(), this->pos().y()));
-//		animation->setEndValue(QPoint(0, this->pos().y()));
-//		animation->start();
-
-//	}
 }
