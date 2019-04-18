@@ -269,26 +269,32 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
 }
 
 
+bool processDragDropEvent(QDropEvent *event) {
+
+	const QMimeData *mimeData = event->mimeData();
+
+	if (!mimeData->urls().length() ||
+		event->proposedAction() == Qt::LinkAction) {
+		event->ignore();
+		return false;
+	}
+
+	if (!event->source()) {
+		event->setDropAction(Qt::MoveAction);
+		event->accept();
+	}
+
+	else {
+		event->acceptProposedAction();
+	}
+
+
+	return true;
+}
 
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
-
-
-
-	qDebug() << event->possibleActions();
-	qDebug() << "DragEnter";
-	qDebug() << event->mimeData()->urls();
-	qDebug() << event->dropAction();
-	qDebug() << event->proposedAction();
-
-
-
-
-//	event->setDropAction(Qt::CopyAction);
-//	event->setDropAction(Qt::LinkAction);
-//	event->setDropAction(Qt::MoveAction);
-	event->acceptProposedAction();
-//	event->accept();
+	processDragDropEvent(event);
 }
 
 
@@ -296,12 +302,9 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
 void MainWindow::dragMoveEvent(QDragMoveEvent *event) {
 
 
-//	Qt::KeyboardModifiers modifiers = event->keyboardModifiers();
+	if (!processDragDropEvent(event)) return;
 
 
-	event->acceptProposedAction();
-//	event->setDropAction(Qt::MoveAction);
-//	event->setDropAction(modifiers.testFlag(Qt::AltModifier) ? Qt::CopyAction : Qt::MoveAction);
 
 	QPoint pos = event->pos();
 
@@ -328,18 +331,17 @@ void MainWindow::dragMoveEvent(QDragMoveEvent *event) {
 }
 
 void MainWindow::dropEvent(QDropEvent *event) {
+	if (!processDragDropEvent(event)) return;
 
-	event->acceptProposedAction();
-
-	qDebug() << "HOW_TO_HANDLE" << event->dropAction();
 
 	const QMimeData *mimeData = event->mimeData();
-	qDebug() << "WHATS_DROPPED" << mimeData->urls();
-
 	QPoint clientDropPos = event->pos();
 	QPoint gridDropPos = clientToGrid(clientDropPos);
-
 	DesktopIcon* target = dynamic_cast<DesktopIcon*>(this->childAt(clientDropPos));
+
+	qDebug() << mimeData->formats();
+	qDebug() << "HOW_TO_HANDLE" << event->dropAction();
+	qDebug() << "WHATS_DROPPED" << mimeData->urls();
 
 	if (target) {
 		qDebug() << "DROP_TO_TARGET" << target->getPath();
@@ -348,8 +350,6 @@ void MainWindow::dropEvent(QDropEvent *event) {
 	else {
 		qDebug() << "DROP_TO_DESKTOP_AT" << gridDropPos;
 	}
-
-
 
 
 
