@@ -25,6 +25,8 @@ private:
 	int gridHeight = 5;
 	int gridSpacing = 10;
 
+	DesktopIcon* dropTarget;
+
 	DesktopIcon* unselectOnRelease;
 	QRubberBand* rubberBand;
 	QFileIconProvider iconProvider;

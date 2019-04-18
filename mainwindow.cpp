@@ -19,6 +19,7 @@
 
 
 QHash<QString, DesktopIcon*> newList;
+QHash<QString, DesktopIcon*> selectedIconsList;
 
 void MainWindow::recalcGrid() {
 	qreal width = this->width();
@@ -166,7 +167,6 @@ void MainWindow::mousePressEvent(QMouseEvent *event) {
 
 void MainWindow::mouseMoveEvent(QMouseEvent *event) {
 
-
 	if (rubberBand->isVisible()) {
 
 		QRect selectionArea = QRect(rubberBand->property("origin").toPoint(), event->pos());
@@ -192,6 +192,7 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event) {
 
 	else {
 
+		QList<QUrl> urls;
 
 		int minLeft = width();
 		int minTop = height();
@@ -200,7 +201,10 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event) {
 
 
 		foreach (DesktopIcon* desktopIcon, newList) {
+			desktopIcon->setProperty("dragging", false);
 			if (!desktopIcon->isSelected()) continue;
+			desktopIcon->setProperty("dragging", true);
+			urls.push_back(desktopIcon->getPath());
 			QRect desktopIconRect = desktopIcon->geometry();
 			minLeft = qMin(minLeft, desktopIconRect.left());
 			minTop = qMin(minTop, desktopIconRect.top());
@@ -221,33 +225,16 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event) {
 		}
 
 
+
 		QDrag dragger(this);
-
-
-		QList<QUrl> urls;
 		QMimeData *mimeData = new QMimeData;
-
-
-		foreach (DesktopIcon* desktopIcon, newList) {
-			if (!desktopIcon->isSelected()) continue;
-			urls.push_back(desktopIcon->getPath());
-
-		}
-
 		mimeData->setUrls(urls);
 		dragger.setMimeData(mimeData);
 		dragger.setPixmap(dragPixmap);
 		dragger.setHotSpot(event->pos() - QPoint(minLeft, minTop));
+		unselectOnRelease = dynamic_cast<DesktopIcon*>(this->childAt(event->pos()));
+		dragger.exec(Qt::CopyAction | Qt::MoveAction, Qt::MoveAction);
 
-
-//		QPixmap pm = QCursor(Qt::PointingHandCursor).pixmap();
-//		qDebug() << pm;
-//		QPixmap pm = new QPixmap();
-//		dragger.setDragCursor(pm, Qt::MoveAction);
-
-		qDebug() << dragger.exec(Qt::CopyAction | Qt::MoveAction, Qt::MoveAction) << 1;
-
-//		QKeySequence::SelectAll
 	}
 
 }
@@ -284,26 +271,8 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
 
 
 
-void MainWindow::dropEvent(QDropEvent *event) {
-
-	event->acceptProposedAction();
-
-	foreach (DesktopIcon* desktopIcon, newList) {
-		if (!desktopIcon->isSelected()) continue;
-
-		QPoint gridPos = clientToGrid(event->pos());
-
-		desktopIcon->setProperty("col", gridPos.x());
-		desktopIcon->setProperty("row", gridPos.y());
-
-		QPoint clientPos = gridToClient(gridPos);
-		desktopIcon->move(clientPos.x(), clientPos.y());
-
-	}
-
-}
-
 void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
+
 
 
 	qDebug() << event->possibleActions();
@@ -314,43 +283,96 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
 
 
 
+
 //	event->setDropAction(Qt::CopyAction);
 //	event->setDropAction(Qt::LinkAction);
-	event->setDropAction(Qt::MoveAction);
-//	event->acceptProposedAction();
-	event->accept();
+//	event->setDropAction(Qt::MoveAction);
+	event->acceptProposedAction();
+//	event->accept();
 }
+
+
 
 void MainWindow::dragMoveEvent(QDragMoveEvent *event) {
 
-	event->acceptProposedAction();
 
+//	Qt::KeyboardModifiers modifiers = event->keyboardModifiers();
+
+
+	event->acceptProposedAction();
+//	event->setDropAction(Qt::MoveAction);
+//	event->setDropAction(modifiers.testFlag(Qt::AltModifier) ? Qt::CopyAction : Qt::MoveAction);
 
 	QPoint pos = event->pos();
-	QPoint grid = clientToGrid(pos);
 
-	foreach (DesktopIcon* icon, newList) {
-		int col = icon->property("col").toInt();
-		int row = icon->property("row").toInt();
-		if (col == grid.x() && row == grid.y()) {
-
-			if (icon->isDirectory()) {
-				icon->setSelected(true);
-			}
-
-			else {
-				event->setDropAction(Qt::IgnoreAction);
-			}
-
-
-
-
-
-			return;
-		}
+	if (dropTarget) {
+		dropTarget->setSelected(false);
+		dropTarget = nullptr;
 	}
 
-	event->setDropAction(Qt::MoveAction);
+
+	DesktopIcon* newDropTarget = dynamic_cast<DesktopIcon*>(this->childAt(pos));
+
+	if (newDropTarget && !newDropTarget->isSelected() && newDropTarget->isDirectory()) {
+		dropTarget = newDropTarget;
+		dropTarget->setSelected(true);
+	}
+
+	else if (newDropTarget) {
+		event->setDropAction(Qt::IgnoreAction);
+	}
+
+
+
+
+}
+
+void MainWindow::dropEvent(QDropEvent *event) {
+
+	event->acceptProposedAction();
+
+	qDebug() << "HOW_TO_HANDLE" << event->dropAction();
+
+	const QMimeData *mimeData = event->mimeData();
+	qDebug() << "WHATS_DROPPED" << mimeData->urls();
+
+	QPoint clientDropPos = event->pos();
+	QPoint gridDropPos = clientToGrid(clientDropPos);
+
+	DesktopIcon* target = dynamic_cast<DesktopIcon*>(this->childAt(clientDropPos));
+
+	if (target) {
+		qDebug() << "DROP_TO_TARGET" << target->getPath();
+	}
+
+	else {
+		qDebug() << "DROP_TO_DESKTOP_AT" << gridDropPos;
+	}
+
+
+
+
+
+	/*
+	QPoint oldGridPos = clientToGrid(unselectOnRelease->pos());
+	QPoint newGridPos = clientToGrid(event->pos());
+	QPoint diff = newGridPos - oldGridPos;
+
+	foreach (DesktopIcon* desktopIcon, newList) {
+		if (!desktopIcon->isSelected()) continue;
+
+
+		QPoint newGridPos = clientToGrid(desktopIcon->pos()) + diff;
+
+
+		desktopIcon->move(gridToClient(newGridPos));
+		desktopIcon->setProperty("col", newGridPos.x());
+		desktopIcon->setProperty("row", newGridPos.y());
+
+
+	}
+	*/
+
 }
 
 
