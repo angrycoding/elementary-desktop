@@ -4,3 +4,5 @@ This project was aiming to test if I could make a "missing" desktop for Elementa
 various problems related with QT (buggy support of drag and drop and several other minor things). But that might change in the future :)
 
 However I've switched to Mint, and it's very unlikely that it's gonna be supported.
+
+![Beautiful elementary os image](https://elementary.io/images/screenshots/desktop.jpg)
