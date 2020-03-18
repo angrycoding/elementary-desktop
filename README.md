@@ -15,7 +15,10 @@ Problems 'ive faced so far:
 
 What's done:
 
-1. Very cool icon rendering technique, which mimics OSX desktop along with rounded corners selection around the text under the icon.
+1. Aligning desktop icons on the grid
+2. Automatically scaling the grid relative to the desktop window size (screen size)
+3. Very cool icon rendering technique, which mimics OSX desktop along with rounded corners selection around the text under the icon.
+4. Drag & drop (multiple files supported) along with correctly rendered drag symbols? (don't remember how exactly it's called)
 
 ![Selection with rubber band](https://raw.githubusercontent.com/angrycoding/elementary-desktop/master/1.png)
 
