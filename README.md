@@ -18,3 +18,5 @@ What's done:
 1. Very cool icon rendering technique, which mimics OSX desktop along with rounded corners selection around the text under the icon.
 
 Besides that everything is pretty straight forward, use file watcher to watch for the changes in the desktop directory and draw icons according to the grid keeping in mind font size, icon size, grid size and so on so on. Thing itself looks very impressive to me in the terms how easy and quick you can make something that looks and behaves "almost" like a native desktop application. However the bad part is that some minor issues / inconviniences makes it totally unusable in real life.
+
+So to me QT is good, but not good enough to make something production ready at least without platform dependent tricks that in my opinion kill all the magic.
